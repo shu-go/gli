@@ -354,9 +354,8 @@ func call(funcName string, cmd interface{}, cmdStack []*cmd, args []string) (cal
 	var argv []reflect.Value
 	for i := 0; i < methv.Type().NumIn(); i++ {
 		in := methv.Type().In(i)
+
 		if in.Kind() == reflect.Struct {
-			// root
-			//argv = append(argv, reflect.ValueOf(root).Elem())
 			st := findStructByType(cmdStack, in)
 			if st == nil {
 				return ErrNotRunnable, nil
@@ -364,8 +363,6 @@ func call(funcName string, cmd interface{}, cmdStack []*cmd, args []string) (cal
 			argv = append(argv, reflect.ValueOf(st).Elem())
 
 		} else if in.Kind() == reflect.Ptr && in.Elem().Kind() == reflect.Struct {
-			// root ptr
-			//argv = append(argv, reflect.ValueOf(root))
 			st := findStructByType(cmdStack, in)
 			if st == nil {
 				return ErrNotRunnable, nil
@@ -398,7 +395,8 @@ func call(funcName string, cmd interface{}, cmdStack []*cmd, args []string) (cal
 func findStructByType(stack []*cmd, typ reflect.Type) interface{} {
 	for i := len(stack) - 1; i >= 0; i-- {
 		e := stack[i].self
-		if reflect.TypeOf(e) == typ {
+		et := reflect.TypeOf(e)
+		if et == typ || et.Kind() == reflect.Ptr && et.Elem() == typ {
 			return e
 		}
 	}

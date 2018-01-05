@@ -1,11 +1,11 @@
 package test
 
 import (
+	"fmt"
 	"testing"
 
 	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
-	"bitbucket.org/shu/rog"
 )
 
 type callGlobal struct {
@@ -56,9 +56,6 @@ func (s callSubSub) After(g *callGlobal) {
 }
 
 func TestCall(t *testing.T) {
-	rog.EnableDebug()
-	defer rog.DisableDebug()
-
 	t.Run("Sub", func(t *testing.T) {
 		g := callGlobal{}
 		app := gli.New(&g)
@@ -73,4 +70,33 @@ func TestCall(t *testing.T) {
 		gotwant.Error(t, err, nil)
 		gotwant.Test(t, g.result, ":global_before:sub_before:subsub_before:subsub_run:subsub_after:sub_after:global_after")
 	})
+}
+
+type callGlobal2 struct {
+	result string
+	Sub1   callSub21
+	Opt    string
+}
+type callSub21 struct {
+	Sub2 callSub22
+	Opt  string
+}
+type callSub22 struct {
+	Sub3 callSub23
+	Opt  string
+}
+type callSub23 struct {
+	Opt string
+}
+
+func (s3 callSub23) Run(s1 callSub21, args []string, s2 *callSub22, g *callGlobal2) {
+	g.result = fmt.Sprintf("global:%v, sub1:%v, sub2:%v, sub3:%v, args:%v", g.Opt, s1.Opt, s2.Opt, s3.Opt, args)
+}
+
+func TestRunSignature(t *testing.T) {
+	g := callGlobal2{}
+	app := gli.New(&g)
+	err := app.Run([]string{"--opt rei sub1 --opt ichi sub2 --opt ni sub3 --opt san shi go roku"})
+	gotwant.Error(t, err, nil)
+	gotwant.Test(t, g.result, "global:rei, sub1:ichi, sub2:ni, sub3:san, args:[shi go roku]")
 }
