@@ -54,7 +54,7 @@ func (app App) Help(w io.Writer) {
 	app.cmd.Help(w)
 
 	if app.Copyright != "" {
-		fmt.Fprintf(w, "%s\n", app.Copyright)
+		fmt.Fprintf(w, "\n%s\n", app.Copyright)
 	}
 }
 
