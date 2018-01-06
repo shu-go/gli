@@ -152,6 +152,41 @@ func (subsub *mySubSub) Run() error {
 }
 ```
 
+## Example5: Extra Command
+
+```go
+type Global struct {}
+
+func main() {
+    ex := extra{
+        Name string `cli:"n"`
+    }{}
+
+    app := gli.New(&Global{})
+    app.AddExtraCommand(&ex, "extra", "help message")
+}
+
+// app extra -n abc
+```
+
+## Example6: User defined option types
+
+```go
+type MyOption struct {
+    Data int
+}
+
+func (o *MyOption) Parse(s string) error {
+    o.Data = len(s)
+}
+
+//
+
+type Global struct {
+    My MyOption
+}
+```
+
 ----
 
 Copyright 2018 Shuhei Kubota
