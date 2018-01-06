@@ -1,0 +1,159 @@
+# features
+
+* struct base
+* tag (`cli:"names, n" help:"help message" default:"parsable literal"`) 
+  * for sub commands (cli, help)
+  * for options (cli, help, default)
+* sub command as a member struct in a parent struct
+  * sub sub ... command
+* extra sub command
+* user defined option types (example: gli.Range, gli.IntList, ...)
+* pointer type options
+* hook functions Init/Before/Run/After/Help as methods of commands
+
+# go get
+
+> go get bitbucket.org/shu/gli
+
+example app:
+
+> go get bitbucket.org/shu/gli/example/todo
+
+This introduces an executable binary `todo`.
+
+# Examples
+
+## Example1: Simple
+
+```go
+type Global struct {
+    Opt1 string
+    Opt2 int
+}
+
+func main() {
+    app := gli.New(&Global{})
+    err := app.Run(os.Args)
+    // :
+}
+
+func (g *Global) Run(args []string) {
+}
+
+// app --opt1 abc --opt2 123
+// app --opt1=abc --opt2=123
+```
+
+## Example2: Renaming
+
+```go
+type Global struct {
+    Opt1 string `cli:"s, str"`
+    Opt2 int    `cli:"i, int, opt2"`
+}
+
+// :
+
+// app --opt1 abc --opt2 123 <-- NG: opt1 is not defined (while opt2 is defined)
+// app -s abc -i 123
+// app --str abc --int 123
+```
+
+## Example3: Sub command
+
+```go
+type Global struct {
+    Opt1 string `cli:"s, str"`
+    Opt2 int    `cli:"i, int, opt2"`
+
+    Sub1 mySub
+}
+
+type mySub struct {
+    Opt3 string
+    
+    Sub2 mySubSub `cli:s, sub2`
+}
+
+func (sub *mySub) Run(g *Global, args []string) {
+}
+
+func (subsub *mySubSub) Run(g *Global, args []string, sub *mySub) {
+}
+
+// app --str abc --int 123 sub1 --opt3 def
+```
+
+## Example4: Hook functions
+
+Commnds (root and sub commands) may have some hook functions.
+
+Define receivers for the target commands.
+
+```go
+func (subsub *mySubSub) Run(g *Global, args []string, sub *mySub) {
+}
+```
+
+* Run
+  * is called for the target command
+* Before
+  * are called for root -> sub -> subsub(target, in this case) 
+  * With any error, Run is not called.
+* After
+  * are called for subsub(target, in this case) -> sub -> root
+* Init
+  * are called for root -> sub -> subsub(target, in this case) 
+  * These functions are for initialization of command struct.
+* Help
+  * prints help message.
+  * subsub(target, in this case) -> root
+
+### Run
+
+1. Init for all commands
+2. Before for all commands
+   * and defer calling After
+3. Run
+
+### Help
+
+1. Init for all commands
+2. first defined Help, subsub -> root
+
+### Signature
+
+Parameters are in arbitrary order, omittable.
+
+* `[]string`
+* `struct{...}` or `*struct{...}` of command
+
+```go
+// OK
+func (subsub *mySubSub) Run(args []string, g *Global, sub *mySub) error {
+}
+// OK
+func (subsub *mySubSub) Run(g *Global, args []string, sub *mySub) error {
+}
+// OK
+func (subsub *mySubSub) Run(args []string, sub *mySub) error {
+}
+// OK
+func (subsub *mySubSub) Run(sub *mySub) error {
+}
+```
+
+Return value is nothing or an error.
+
+```go
+func (subsub *mySubSub) Run() {
+}
+func (subsub *mySubSub) Run() error {
+}
+```
+
+----
+
+Copyright 2018 Shuhei Kubota
+
+<!--  vim: set et ft=markdown sts=4 sw=4 ts=4 tw=0 : -->
