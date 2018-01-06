@@ -35,7 +35,7 @@ func (c cmd) Help(w io.Writer) {
 	}
 
 	if len(c.subs)+len(c.extras) > 0 {
-		fmt.Fprintln(w, "sub commands:")
+		fmt.Fprintln(w, "Sub commands:")
 
 		var subs []*cmd
 		subs = append(subs, c.subs...)
@@ -61,13 +61,13 @@ func (c cmd) Help(w io.Writer) {
 
 		for i, n := range names {
 			spaces := strings.Repeat(" ", width-len(n))
-			fmt.Fprintf(w, " %s%s%s\n", n, spaces, helps[i])
+			fmt.Fprintf(w, "  %s%s%s\n", n, spaces, helps[i])
 		}
 		fmt.Fprintln(w)
 	}
 
 	if len(c.opts) > 0 {
-		fmt.Fprintln(w, "options:")
+		fmt.Fprintln(w, "Options:")
 
 		var names []string
 		var helps []string
@@ -110,7 +110,7 @@ func (c cmd) Help(w io.Writer) {
 				def = " (default: " + defdesc[i] + ")"
 			}
 
-			fmt.Fprintf(w, " %s%s%s%s\n", n, spaces, helps[i], def)
+			fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
 		}
 		fmt.Fprintln(w)
 	}
