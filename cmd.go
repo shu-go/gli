@@ -19,7 +19,8 @@ type cmd struct {
 	opts []*opt
 	args []string
 
-	help string
+	help  string
+	usage string
 
 	self     interface{}
 	fieldIdx int // physical
@@ -112,7 +113,10 @@ func (c cmd) Help(w io.Writer) {
 			fmt.Fprintf(w, " %s%s%s%s\n", n, spaces, helps[i], def)
 		}
 		fmt.Fprintln(w)
+	}
 
+	if len(c.usage) > 0 {
+		fmt.Fprintf(w, "Usage:\n  %v\n", strings.Replace(strings.TrimSpace(c.usage), "\n", "\n  ", -1))
 	}
 }
 

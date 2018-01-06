@@ -14,7 +14,7 @@ type App struct {
 	cmd cmd
 
 	// global help header
-	Name, Desc, Version string
+	Name, Desc, Usage, Version string
 	// global help footer
 	Copyright string
 }
@@ -48,6 +48,8 @@ func (app App) Help(w io.Writer) {
 	if appinfo != "" {
 		fmt.Fprintf(w, "%s\n\n", appinfo)
 	}
+
+	app.cmd.usage = app.Usage
 
 	app.cmd.Help(w)
 
@@ -280,6 +282,7 @@ func gather(vtgt reflect.Value, tgt *cmd) error {
 		var env string
 		var defvalue string
 		var help string
+		var usage string
 		var placeholder string
 
 		// names
@@ -310,11 +313,16 @@ func gather(vtgt reflect.Value, tgt *cmd) error {
 		if tv, ok := tag.Lookup("help"); ok {
 			help = strings.TrimSpace(tv)
 		}
+		// usage description
+		if tv, ok := tag.Lookup("usage"); ok {
+			usage = strings.TrimSpace(tv)
+		}
 
 		if iscmd /* f.Kind() == reflect.Struct */ {
 			sub := &cmd{
 				names:    names,
 				help:     help,
+				usage:    usage,
 				self:     f.Addr().Interface(),
 				fieldIdx: i,
 				holder:   vtgt,

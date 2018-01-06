@@ -16,7 +16,7 @@ var (
 
 type TodoGlobal struct {
 	List TodoListCmd `cli:"ls,list" help:"list todoes"`
-	Add  TodoAddCmd  `help:"add todoes"`
+	Add  TodoAddCmd  `help:"add todoes" usage:"todo add {ITEM}...\nNote: multiple ITEMs are OK."`
 	Del  TodoDelCmd  `cli:"del,delete" help:"delete todoes"`
 	Done TodoDoneCmd `cli:"done" help:"mark todoes as done or undone"`
 
