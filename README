@@ -2,8 +2,8 @@
 
 * struct base
 * tag (`cli:"names, n" help:"help message" default:"parsable literal"`) 
-  * for sub commands (cli, help)
-  * for options (cli, help, default)
+  * for sub commands (cli, help, usage)
+  * for options (cli, help, default, env)
 * sub command as a member struct in a parent struct
   * sub sub ... command
 * extra sub command
@@ -186,6 +186,39 @@ type Global struct {
     My MyOption
 }
 ```
+
+## Example7: more tags
+
+```go
+type Global struct {
+    Opt1 string `cli:"opt1=PLACE_HOLDER" default:"default value" env:"ENV_OPT1" help:"help message"`
+    Sub MySub   `cli:"sub" help:"help message" usage:"multi line usages\nseparated by \\n"`
+}
+```
+
+Options:
+* cli
+  * renaming
+  * `cli:"name1, name2, ..., nameZ=PLACE_HOLDER"`
+* default
+  * in string literal
+  * bool, float, int and uint are converted by strconv.ParseXXX
+  * other types are required implement func Parse (see Example6)
+  * use Init hook function for dynamic default values
+* env
+  * environment variable name
+* help
+
+Sub commands:
+* cli
+* help
+* usage
+  * multi line usage description separated by \n.
+
+Option value overwriting:
+1. default tag
+2. env tag
+3. Init hook function
 
 ----
 
