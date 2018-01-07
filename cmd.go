@@ -112,7 +112,6 @@ func (c cmd) Help(w io.Writer) {
 
 			fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
 		}
-		fmt.Fprintln(w)
 	}
 
 	if len(c.usage) > 0 {
