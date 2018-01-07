@@ -27,6 +27,15 @@ type cmd struct {
 	holder   reflect.Value
 }
 
+type extraCmdInit func(*cmd) error
+
+func Usage(usage string) extraCmdInit {
+	return func(c *cmd) error {
+		c.usage = usage
+		return nil
+	}
+}
+
 func (c cmd) Help(w io.Writer) {
 	if len(c.names) > 0 {
 		name := longestName(c.names)

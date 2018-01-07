@@ -63,9 +63,9 @@ Help sub commands:
 	}
 }
 
-func (app *App) AddExtraCommand(ptrSt interface{}, names, help string) {
-	vroot := reflect.ValueOf(ptrSt)
-	if vroot.Kind() != reflect.Ptr && vroot.Elem().Kind() != reflect.Struct {
+func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...extraCmdInit) {
+	v := reflect.ValueOf(ptrSt)
+	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
 		panic("not a pointer to a struct")
 	}
 	if len(names) == 0 {
@@ -78,7 +78,11 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string) {
 	}
 	c := cmd{names: nameslice, help: help, self: ptrSt}
 
-	err := gather(vroot, &c)
+	for _, init := range inits {
+		init(&c)
+	}
+
+	err := gather(v, &c)
 	if err != nil {
 		panic(err.Error())
 	}

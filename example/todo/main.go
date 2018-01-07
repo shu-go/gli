@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/shu/clise"
 	"bitbucket.org/shu/gli"
+	"bitbucket.org/shu/rog"
 )
 
 var (
@@ -15,10 +16,10 @@ var (
 )
 
 type TodoGlobal struct {
-	List TodoListCmd `cli:"ls,list" help:"list todoes"`
+	List TodoListCmd `cli:"ls,list"  help:"list todoes"  usage:"todo list [--done|--undone] [filter words...]"`
 	Add  TodoAddCmd  `help:"add todoes" usage:"todo add {ITEM}...\nNote: multiple ITEMs are OK."`
-	Del  TodoDelCmd  `cli:"del,delete" help:"delete todoes"`
-	Done TodoDoneCmd `cli:"done" help:"mark todoes as done or undone"`
+	Del  TodoDelCmd  `cli:"del,delete" help:"delete todoes" usage:"todo delete [--num NUM] [filter words...]"`
+	Done TodoDoneCmd `cli:"done" help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
 
 	File    string `cli:"file=FILE_PATH" default:"./todo.json" help:"file name of a storage"`
 	Verbose bool   `cli:"v,verbose" help:"verbose output"`
@@ -45,6 +46,7 @@ func (g TodoGlobal) Before() error {
 		verbose = func(format string, v ...interface{}) {
 			fmt.Fprintf(os.Stderr, format, v...)
 		}
+		rog.EnableDebug()
 	}
 	return nil
 }
@@ -196,7 +198,6 @@ func (done TodoDoneCmd) Run(global *TodoGlobal, args []string) error {
 }
 
 func main() {
-	//rog.EnableDebug()
 
 	app := gli.New(&TodoGlobal{})
 	app.Name = "todo"
@@ -204,8 +205,13 @@ func main() {
 	app.Version = "beta"
 	app.Copyright = "(C) 2017 Shuhei Kubota"
 
-	err := app.Run(os.Args)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-	}
+	app.AddExtraCommand(&Hello{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
+
+	app.Run(os.Args)
+}
+
+type Hello struct{}
+
+func (hello Hello) Run() {
+	fmt.Println("hello!")
 }
