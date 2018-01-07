@@ -136,8 +136,8 @@ func (app App) Run(args []string) (appRunErr error) {
 				for i, ch := range name {
 					o = c.findOpt(string(ch))
 					if o == nil {
-						fmt.Fprintf(os.Stderr, "option %s %v\n\n", string(ch), ErrNotDefined)
-						app.Help(os.Stderr)
+						fmt.Fprintf(os.Stdout, "option %s %v\n\n", string(ch), ErrNotDefined)
+						app.Help(os.Stdout)
 						return ErrNotDefined
 					}
 					if i < len(name)-1 {
@@ -148,7 +148,7 @@ func (app App) Run(args []string) (appRunErr error) {
 
 			if o == nil {
 				fmt.Fprintf(os.Stderr, "option %s %v\n\n", name, ErrNotDefined)
-				app.Help(os.Stderr)
+				app.Help(os.Stdout)
 				return ErrNotDefined
 			}
 
@@ -201,9 +201,9 @@ func (app App) Run(args []string) (appRunErr error) {
 
 		if callErr != nil {
 			if c.self == app.cmd.self {
-				app.Help(os.Stderr)
+				app.Help(os.Stdout)
 			} else {
-				c.Help(os.Stderr)
+				c.Help(os.Stdout)
 			}
 		}
 
@@ -221,7 +221,7 @@ func (app App) Run(args []string) (appRunErr error) {
 		callErr, beforeErr := call("Before", c.self, cmdStack, c.args)
 		if callErr == nil && beforeErr != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
-			c.Help(os.Stderr)
+			c.Help(os.Stdout)
 			return beforeErr
 		}
 
@@ -242,9 +242,9 @@ func (app App) Run(args []string) (appRunErr error) {
 
 	if callErr != nil {
 		if c == &app.cmd {
-			app.Help(os.Stderr)
+			app.Help(os.Stdout)
 		} else {
-			c.Help(os.Stderr)
+			c.Help(os.Stdout)
 		}
 		return nil
 	}
