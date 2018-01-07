@@ -174,18 +174,24 @@ func (app App) Run(args []string) (appRunErr error) {
 			name = ""
 
 		} else if len(c.args) == 0 {
-			sub := c.findSubCmd(t)
-			if sub == nil {
-				c.args = append(c.args, t)
-			} else {
-				c = sub
-				cmdStack = append(cmdStack, c)
+			if len(c.subs)+len(c.extras) > 0 {
+				sub := c.findSubCmd(t)
+				if sub == nil {
+					fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
+					app.Help(os.Stdout)
+					return ErrNotDefined
+				} else {
+					c = sub
+					cmdStack = append(cmdStack, c)
 
-				rog.Debug("call Init ", c.names)
-				_, defErr := call("Init", c.self, cmdStack, c.args)
-				if defErr != nil {
-					return defErr
+					rog.Debug("call Init ", c.names)
+					_, defErr := call("Init", c.self, cmdStack, c.args)
+					if defErr != nil {
+						return defErr
+					}
 				}
+			} else {
+				c.args = append(c.args, t)
 			}
 
 		} else {
@@ -250,6 +256,7 @@ func (app App) Run(args []string) (appRunErr error) {
 		} else {
 			c.Help(os.Stdout)
 		}
+		//return ErrNotDefined
 		return nil
 	}
 
