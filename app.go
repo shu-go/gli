@@ -53,6 +53,11 @@ func (app App) Help(w io.Writer) {
 
 	app.cmd.Help(w)
 
+	fmt.Fprintln(w, `
+Help sub commands:
+  help          `+app.Name+` help subcommnad subsubcommand
+  version       show version`)
+
 	if app.Copyright != "" {
 		fmt.Fprintf(w, "\n%s\n", app.Copyright)
 	}
@@ -112,9 +117,14 @@ func (app App) Run(args []string) (appRunErr error) {
 		}
 		arg = arg[l:]
 
-		if t == "help" || t == "--help" || t == "-h" {
+		if len(cmdStack) == 1 && (t == "help" || t == "--help" || t == "-h") {
 			helpMode = true
 			continue
+		}
+
+		if len(cmdStack) == 1 && (t == "version") {
+			fmt.Fprintln(os.Stdout, app.Version)
+			return nil
 		}
 
 		if name == "" && strings.HasPrefix(t, "-") {
