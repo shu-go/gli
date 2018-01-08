@@ -20,8 +20,8 @@ type App struct {
 }
 
 func New(ptrSt interface{}) App {
-	vroot := reflect.ValueOf(ptrSt)
-	if vroot.Kind() != reflect.Ptr && vroot.Elem().Kind() != reflect.Struct {
+	v := reflect.ValueOf(ptrSt)
+	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
 		panic("not a pointer to a struct")
 	}
 
@@ -29,7 +29,7 @@ func New(ptrSt interface{}) App {
 		cmd: cmd{self: ptrSt},
 	}
 
-	err := gather(vroot, &app.cmd)
+	err := gather(v, &app.cmd)
 	if err != nil {
 		panic(err.Error())
 	}
