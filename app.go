@@ -46,7 +46,7 @@ func (app App) Help(w io.Writer) {
 		appinfo += "(" + app.Version + ")"
 	}
 	if appinfo != "" {
-		fmt.Fprintf(w, "%s\n\n", appinfo)
+		fmt.Fprintf(w, "%s\n", appinfo)
 	}
 
 	app.cmd.usage = app.Usage
