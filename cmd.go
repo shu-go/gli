@@ -40,10 +40,10 @@ func (c cmd) Help(w io.Writer) {
 	if len(c.names) > 0 {
 		name := longestName(c.names)
 		fmt.Fprintf(w, "command %s - %s\n", name, c.help)
-		fmt.Fprintln(w)
 	}
 
 	if len(c.subs)+len(c.extras) > 0 {
+		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Sub commands:")
 
 		var subs []*cmd
@@ -72,10 +72,10 @@ func (c cmd) Help(w io.Writer) {
 			spaces := strings.Repeat(" ", width-len(n))
 			fmt.Fprintf(w, "  %s%s%s\n", n, spaces, helps[i])
 		}
-		fmt.Fprintln(w)
 	}
 
 	if len(c.opts) > 0 {
+		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Options:")
 
 		var names []string
@@ -124,6 +124,7 @@ func (c cmd) Help(w io.Writer) {
 	}
 
 	if len(c.usage) > 0 {
+		fmt.Fprintln(w)
 		fmt.Fprintf(w, "Usage:\n  %v\n", strings.Replace(strings.TrimSpace(c.usage), "\n", "\n  ", -1))
 	}
 }
