@@ -33,7 +33,7 @@ type Global struct {
 
 func main() {
     app := gli.New(&Global{})
-    err := app.Run(os.Args)
+    _, _, err := app.Run(os.Args)
     // :
 }
 
@@ -152,7 +152,49 @@ func (subsub *mySubSub) Run() error {
 }
 ```
 
-## Example5: Extra Command
+## Example5: No Hook
+
+Using gli to get values. No Run() implementeda.
+
+```go
+type Global struct {
+    Opt1 string
+    Opt2 int
+    Sub1 *Sub1Cmd
+}
+
+type Sub1Cmd struct {
+    Opt3 string
+}
+
+func main() {
+    g := Global{}
+    app := gli.New(&g)
+    tgt, tgtargs, err := app.Run(os.Args, false) // no hook
+
+    // traverse g
+    println(g.Opt1) // abc
+    println(g.Opt2) // 123
+    if g.Sub1 != nil {
+        println(g.Sub1.Opt3) // def
+    }
+
+    if sub1, ok := tgt.(*Sub1Cmd); ok {
+        println(sub1.Opt3) // def
+    }
+    println(tgtargs) // g h i
+}
+
+func (g *Global) Run(args []string) {
+    // not called
+}
+
+// app --opt1 abc --opt2 123 sub1 --opt3 def  g h i
+```
+
+
+
+## Example6: Extra Command
 
 ```go
 type Global struct {}
@@ -169,7 +211,7 @@ func main() {
 // app extra -n abc
 ```
 
-## Example6: User defined option types
+## Example7: User defined option types
 
 ```go
 type MyOption struct {
@@ -187,7 +229,7 @@ type Global struct {
 }
 ```
 
-## Example7: more tags
+## Example8: more tags
 
 ```go
 type Global struct {
@@ -203,7 +245,7 @@ Options:
 * default
   * in string literal
   * bool, float, int and uint are converted by strconv.ParseXXX
-  * other types are required implement func Parse (see Example6)
+  * other types are required implement func Parse (see Example7)
   * use Init hook function for dynamic default values
 * env
   * environment variable name
