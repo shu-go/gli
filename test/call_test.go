@@ -6,11 +6,12 @@ import (
 
 	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
+	"bitbucket.org/shu/rog"
 )
 
 type callGlobal struct {
-	Sub    callSub
 	result string
+	Sub    callSub
 }
 
 func (g *callGlobal) Before() {
@@ -57,6 +58,7 @@ func (s callSubSub) After(g *callGlobal) {
 
 func TestCall(t *testing.T) {
 	t.Run("Sub", func(t *testing.T) {
+		defer rog.DoneDebugging()()
 		g := callGlobal{}
 		app := gli.New(&g)
 		err := app.Run([]string{"sub"})
@@ -64,6 +66,7 @@ func TestCall(t *testing.T) {
 		gotwant.Test(t, g.result, ":global_before:sub_before:sub_run:sub_after:global_after")
 	})
 	t.Run("SubSub", func(t *testing.T) {
+
 		g := callGlobal{}
 		app := gli.New(&g)
 		err := app.Run([]string{"sub subsub"})

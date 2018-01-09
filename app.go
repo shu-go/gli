@@ -6,8 +6,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-
-	"bitbucket.org/shu/rog"
 )
 
 type App struct {
@@ -26,10 +24,10 @@ func New(ptrSt interface{}) App {
 	}
 
 	app := App{
-		cmd: cmd{self: ptrSt},
+		cmd: cmd{v: v},
 	}
 
-	err := gather(v, &app.cmd)
+	err := gather(v.Type(), &app.cmd)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -76,13 +74,13 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...
 	for i, n := range nameslice {
 		nameslice[i] = strings.TrimSpace(n)
 	}
-	c := cmd{names: nameslice, help: help, self: ptrSt}
+	c := cmd{names: nameslice, help: help, v: v}
 
 	for _, init := range inits {
 		init(&c)
 	}
 
-	err := gather(v, &c)
+	err := gather(v.Type(), &c)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -94,16 +92,15 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...
 func (app App) Run(args []string) (appRunErr error) {
 	c := &app.cmd
 
-	setDefaultValues(c)
-
 	if len(args) == len(os.Args) && len(args) > 0 && args[0] == os.Args[0] {
 		args = args[1:]
 	}
 
 	cmdStack := []*cmd{c}
+	c.setMembersReferMe()
+	c.setDefaultValues()
 
-	rog.Debug("call Init root")
-	_, defErr := call("Init", c.self, cmdStack, c.args)
+	_, defErr := call("Init", c.v, cmdStack, c.args)
 	if defErr != nil {
 		return defErr
 	}
@@ -144,8 +141,10 @@ func (app App) Run(args []string) (appRunErr error) {
 						app.Help(os.Stdout)
 						return ErrNotDefined
 					}
+
+					o.pv = c.v
 					if i < len(name)-1 {
-						o.holder.Field(o.fieldIdx).Set(reflect.ValueOf(true))
+						o.pv.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(true))
 					}
 				}
 			}
@@ -156,36 +155,47 @@ func (app App) Run(args []string) (appRunErr error) {
 				return ErrNotDefined
 			}
 
-			if o != nil {
-				if o.holder.Field(o.fieldIdx).Kind() == reflect.Bool {
-					o.holder.Field(o.fieldIdx).Set(reflect.ValueOf(true))
-					name = ""
-					o = nil
-				}
+			o.pv = c.v
+
+			if o.pv.Elem().Field(o.fieldIdx).Kind() == reflect.Bool {
+				o.pv.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(true))
+				name = ""
+				o = nil
 			}
 
 		} else if t == "=" {
 			//nop
 
 		} else if name != "" && o != nil {
-			//o.holder.Field(o.fieldIdx).Set(reflect.ValueOf(t))
-			setOptValue(o.holder.Field(o.fieldIdx), t)
+			//reflect.ValueOf(o.cmd.self).Field(o.fieldIdx).Set(reflect.ValueOf(t))
+			setOptValue(o.pv.Elem().Field(o.fieldIdx), t)
 
 			name = ""
 
 		} else if len(c.args) == 0 {
 			if len(c.subs)+len(c.extras) > 0 {
-				sub := c.findSubCmd(t)
+				sub, extra := c.findSubCmd(t)
 				if sub == nil {
 					fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
 					app.Help(os.Stdout)
 					return ErrNotDefined
 				} else {
+					if !extra {
+						sub.pv = c.v
+						subt := c.v.Type().Elem().Field(sub.fieldIdx).Type
+						if subt.Kind() == reflect.Ptr {
+							sub.v = reflect.New(subt.Elem())
+							c.v.Elem().Field(sub.fieldIdx).Set(sub.v)
+						} else {
+							sub.v = c.v.Elem().Field(sub.fieldIdx).Addr()
+						}
+					}
 					c = sub
 					cmdStack = append(cmdStack, c)
+					c.setMembersReferMe()
+					c.setDefaultValues()
 
-					rog.Debug("call Init ", c.names)
-					_, defErr := call("Init", c.self, cmdStack, c.args)
+					_, defErr := call("Init", c.v, cmdStack, c.args)
 					if defErr != nil {
 						return defErr
 					}
@@ -202,15 +212,13 @@ func (app App) Run(args []string) (appRunErr error) {
 	if helpMode {
 		funcName := "Help"
 
-		rog.Debug("call "+funcName+" ", c.names)
-		callErr, helpErr := call(funcName, c.self, cmdStack, c.args)
+		callErr, helpErr := call(funcName, c.v, cmdStack, c.args)
 		if callErr == ErrNotRunnable {
-			rog.Debug("call " + funcName + " root")
-			callErr, helpErr = call(funcName, app.cmd.self, cmdStack, app.cmd.args)
+			callErr, helpErr = call(funcName, app.cmd.v, cmdStack, app.cmd.args)
 		}
 
 		if callErr != nil {
-			if c.self == app.cmd.self {
+			if c.v == app.cmd.v {
 				app.Help(os.Stdout)
 			} else {
 				c.Help(os.Stdout)
@@ -227,8 +235,7 @@ func (app App) Run(args []string) (appRunErr error) {
 	// After: subsub->sub->root *deferred*
 
 	for _, c := range cmdStack {
-		rog.Debug("call Before ", c.names)
-		callErr, beforeErr := call("Before", c.self, cmdStack, c.args)
+		callErr, beforeErr := call("Before", c.v, cmdStack, c.args)
 		if callErr == nil && beforeErr != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
 			c.Help(os.Stdout)
@@ -237,8 +244,7 @@ func (app App) Run(args []string) (appRunErr error) {
 
 		defer func(c *cmd) {
 			// After()
-			rog.Debug("call After ", c.names)
-			callErr, afterErr := call("After", c.self, cmdStack, c.args)
+			callErr, afterErr := call("After", c.v, cmdStack, c.args)
 			if callErr != nil && appRunErr == nil {
 				appRunErr = afterErr
 			}
@@ -247,8 +253,7 @@ func (app App) Run(args []string) (appRunErr error) {
 
 	funcName := "Run"
 
-	rog.Debug("call "+funcName+" ", c.names)
-	callErr, runErr := call(funcName, c.self, cmdStack, c.args)
+	callErr, runErr := call(funcName, c.v, cmdStack, c.args)
 
 	if callErr != nil {
 		if c == &app.cmd {
@@ -268,15 +273,16 @@ func (app App) Run(args []string) (appRunErr error) {
 	return nil
 }
 
-func gather(vtgt reflect.Value, tgt *cmd) error {
-	vtgt = reflect.Indirect(vtgt)
-	if vtgt.Kind() != reflect.Struct {
+func gather(ttgt reflect.Type, tgt *cmd) error {
+	if ttgt.Kind() == reflect.Ptr {
+		ttgt = ttgt.Elem()
+	}
+	if ttgt.Kind() != reflect.Struct {
 		return nil
 	}
 
-	for i := 0; i < vtgt.NumField(); i++ {
-		f := vtgt.Field(i)
-		ft := vtgt.Type().Field(i)
+	for i := 0; i < ttgt.NumField(); i++ {
+		ft := ttgt.Field(i)
 
 		switch ft.Type.Kind() {
 		case reflect.Map:
@@ -285,10 +291,10 @@ func gather(vtgt reflect.Value, tgt *cmd) error {
 
 		iscmd := false
 		{ // struct is skipped if a non-Parsable
-			if f.Type().Kind() == reflect.Struct {
-				_, ok := f.Interface().(Parsable)
+			if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
+				ok := ft.Type.Implements(reflect.TypeOf((*Parsable)(nil)).Elem())
 				if !ok {
-					_, ok := f.Addr().Interface().(Parsable)
+					ok = reflect.PtrTo(ft.Type).Implements(reflect.TypeOf((*Parsable)(nil)).Elem())
 					if !ok {
 						iscmd = true
 					}
@@ -344,18 +350,15 @@ func gather(vtgt reflect.Value, tgt *cmd) error {
 				names:    names,
 				help:     help,
 				usage:    usage,
-				self:     f.Addr().Interface(),
 				fieldIdx: i,
-				holder:   vtgt,
 			}
 			tgt.subs = append(tgt.subs, sub)
 
-			err := gather(f, sub)
+			err := gather(ft.Type, sub)
 			if err != nil {
 				return err
 			}
 		} else {
-
 			tgt.opts = append(tgt.opts, &opt{
 				names:       names,
 				env:         env,
@@ -363,7 +366,6 @@ func gather(vtgt reflect.Value, tgt *cmd) error {
 				help:        help,
 				placeholder: placeholder,
 				fieldIdx:    i,
-				holder:      vtgt,
 			})
 		}
 	}
@@ -371,11 +373,8 @@ func gather(vtgt reflect.Value, tgt *cmd) error {
 	return nil
 }
 
-func call(funcName string, cmd interface{}, cmdStack []*cmd, args []string) (callErr, userErr error) {
-	if cmd == nil {
-		return ErrNotRunnable, nil
-	}
-	methv := reflect.ValueOf(cmd).MethodByName(funcName)
+func call(funcName string, cmd reflect.Value, cmdStack []*cmd, args []string) (callErr, userErr error) {
+	methv := cmd.MethodByName(funcName)
 	if methv == (reflect.Value{}) {
 		return ErrNotRunnable, nil
 	}
@@ -423,10 +422,11 @@ func call(funcName string, cmd interface{}, cmdStack []*cmd, args []string) (cal
 
 func findStructByType(stack []*cmd, typ reflect.Type) interface{} {
 	for i := len(stack) - 1; i >= 0; i-- {
-		e := stack[i].self
-		et := reflect.TypeOf(e)
+		e := stack[i].v
+		ei := stack[i].v.Interface()
+		et := e.Type()
 		if et == typ || et.Kind() == reflect.Ptr && et.Elem() == typ {
-			return e
+			return ei
 		}
 	}
 	return nil

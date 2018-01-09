@@ -14,8 +14,10 @@ type opt struct {
 	help        string
 	placeholder string
 
-	fieldIdx int // physical
-	holder   reflect.Value
+	//
+
+	pv       reflect.Value
+	fieldIdx int
 }
 
 func (o opt) String() string {
@@ -23,12 +25,12 @@ func (o opt) String() string {
 }
 
 func (o *opt) set(value string) {
-	fv := o.holder.Field(o.fieldIdx)
+	fv := o.pv.Field(o.fieldIdx)
 	if fv.Type().Kind() == reflect.Ptr {
 		pv := reflect.New(fv.Type().Elem())
 		pv.Elem().Set(reflect.ValueOf(value))
 		fv.Set(pv)
 	} else {
-		o.holder.Field(o.fieldIdx).Set(reflect.ValueOf(value))
+		o.pv.Field(o.fieldIdx).Set(reflect.ValueOf(value))
 	}
 }

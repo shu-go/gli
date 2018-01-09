@@ -2,7 +2,6 @@ package gli
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strconv"
 )
@@ -33,7 +32,7 @@ func setOptValue(opt reflect.Value, value string) error {
 	p, ok := opt.Interface().(Parsable)
 	if ok {
 		return p.Parse(value)
-	} else {
+	} else if opt.CanAddr() {
 		p, ok := opt.Addr().Interface().(Parsable)
 		if ok {
 			return p.Parse(value)
@@ -82,25 +81,4 @@ func setOptValue(opt reflect.Value, value string) error {
 	}
 
 	return ErrOptCanNotBeSet
-}
-
-func setDefaultValues(c *cmd) {
-	for _, o := range c.opts {
-		if o.defvalue != "" {
-			setOptValue(o.holder.Field(o.fieldIdx), o.defvalue)
-		}
-		if o.env != "" {
-			envvalue := os.Getenv(o.env)
-			if envvalue != "" {
-				setOptValue(o.holder.Field(o.fieldIdx), envvalue)
-			}
-		}
-	}
-
-	for _, s := range c.extras {
-		setDefaultValues(s)
-	}
-	for _, s := range c.subs {
-		setDefaultValues(s)
-	}
 }
