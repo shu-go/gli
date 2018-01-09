@@ -3,6 +3,7 @@ package gli
 import (
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -22,9 +23,12 @@ type cmd struct {
 	help  string
 	usage string
 
-	self     interface{}
-	fieldIdx int // physical
-	holder   reflect.Value
+	//
+
+	v reflect.Value
+
+	pv       reflect.Value
+	fieldIdx int
 }
 
 type extraCmdInit func(*cmd) error
@@ -157,22 +161,45 @@ func (c cmd) findOpt(name string) *opt {
 	return nil
 }
 
-func (c cmd) findSubCmd(name string) *cmd {
+func (c cmd) findSubCmd(name string) (cmd *cmd, extra bool) {
 	for _, s := range c.extras {
 		for _, n := range s.names {
 			if n == name {
-				return s
+				return s, true
 			}
 		}
 	}
 	for _, s := range c.subs {
 		for _, n := range s.names {
 			if n == name {
-				return s
+				return s, false
 			}
 		}
 	}
-	return nil
+	return nil, false
+}
+
+func (c *cmd) setMembersReferMe() {
+	for _, o := range c.opts {
+		o.pv = c.v
+	}
+	for _, s := range c.subs {
+		s.pv = c.v
+	}
+}
+
+func (c *cmd) setDefaultValues() {
+	for _, o := range c.opts {
+		if o.defvalue != "" {
+			setOptValue(o.pv.Elem().Field(o.fieldIdx), o.defvalue)
+		}
+		if o.env != "" {
+			envvalue := os.Getenv(o.env)
+			if envvalue != "" {
+				setOptValue(o.pv.Elem().Field(o.fieldIdx), envvalue)
+			}
+		}
+	}
 }
 
 func longestName(names []string) string {

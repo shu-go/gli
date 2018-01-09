@@ -29,3 +29,33 @@ func TestPtrOpt(t *testing.T) {
 		gotwant.Test(t, *g.Str, "aaa")
 	})
 }
+
+type PtrGlobal struct {
+	Sub1 *PtrSub1
+	Sub2 *PtrSub2
+}
+
+type PtrSub1 struct {
+	Opt1 string
+}
+
+type PtrSub2 struct {
+	Opt1 string
+}
+
+func (c *PtrSub1) Run() {
+	subresult = c.Opt1
+}
+
+func (c *PtrSub2) Run() {
+	subresult = c.Opt1
+}
+
+func TestPtrSubcmd(t *testing.T) {
+	g := PtrGlobal{}
+	app := gli.New(&g)
+	app.Run([]string{"sub1 --opt1 abc"})
+	gotwant.Test(t, subresult, "abc")
+	gotwant.Test(t, g.Sub1.Opt1, "abc")
+	gotwant.Test(t, g.Sub2, (*PtrSub2)(nil))
+}

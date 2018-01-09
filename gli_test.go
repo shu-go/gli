@@ -41,6 +41,19 @@ func TestStructure2(t *testing.T) {
 	gotwant.Test(t, app.cmd.subs[0].opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
 }
 
+func TestStructure3(t *testing.T) {
+	o := struct {
+		Sub1 *struct {
+			Option1 bool
+		}
+	}{}
+	app := New(&o)
+	gotwant.Test(t, len(app.cmd.opts), 0, gotwant.Format("%#v"))
+	gotwant.Test(t, app.cmd.subs[0].names, []string{"sub1"}, gotwant.Format("%#v"))
+	gotwant.Test(t, len(app.cmd.subs[0].opts), 1, gotwant.Format("%#v"))
+	gotwant.Test(t, app.cmd.subs[0].opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
+}
+
 func TestRun1(t *testing.T) {
 	o := struct {
 		Name    string

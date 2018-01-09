@@ -25,13 +25,18 @@ func TestDefault(t *testing.T) {
 	wantg.Value1 = "abc"
 	wantg.Value2 = -123
 	wantg.Value3 = gli.Range{Min: "a", Max: "z"}
-	wantg.Sub.Value4 = "def"
-	wantg.Sub.Value5 = 234
-	wantg.Sub.Value6 = gli.Range{Min: "", Max: "z"}
 
 	app := gli.New(&g)
 	app.Run([]string{})
 	gotwant.Test(t, g, wantg)
+
+	wantg = orig
+	wantg.Value1 = "abc"
+	wantg.Value2 = -123
+	wantg.Value3 = gli.Range{Min: "a", Max: "z"}
+	wantg.Sub.Value4 = "def"
+	wantg.Sub.Value5 = 234
+	wantg.Sub.Value6 = gli.Range{Min: "", Max: "z"}
 
 	g = orig
 	app = gli.New(&g)
