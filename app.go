@@ -89,8 +89,13 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...
 
 }
 
-func (app App) Run(args []string) (appRunErr error) {
+func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []string, appRunErr error) {
 	c := &app.cmd
+
+	doRun := true
+	if len(optDoRun) > 0 && !optDoRun[0] {
+		doRun = false
+	}
 
 	if len(args) == len(os.Args) && len(args) > 0 && args[0] == os.Args[0] {
 		args = args[1:]
@@ -102,7 +107,7 @@ func (app App) Run(args []string) (appRunErr error) {
 
 	_, defErr := call("Init", c.v, cmdStack, c.args)
 	if defErr != nil {
-		return defErr
+		return nil, nil, defErr
 	}
 
 	var name string
@@ -125,7 +130,7 @@ func (app App) Run(args []string) (appRunErr error) {
 
 		if len(cmdStack) == 1 && (t == "version") {
 			fmt.Fprintln(os.Stdout, app.Version)
-			return nil
+			return nil, nil, nil
 		}
 
 		if name == "" && strings.HasPrefix(t, "-") {
@@ -139,7 +144,7 @@ func (app App) Run(args []string) (appRunErr error) {
 					if o == nil {
 						fmt.Fprintf(os.Stdout, "option %s %v\n\n", string(ch), ErrNotDefined)
 						app.Help(os.Stdout)
-						return ErrNotDefined
+						return nil, nil, ErrNotDefined
 					}
 
 					o.pv = c.v
@@ -152,7 +157,7 @@ func (app App) Run(args []string) (appRunErr error) {
 			if o == nil {
 				fmt.Fprintf(os.Stderr, "option %s %v\n\n", name, ErrNotDefined)
 				app.Help(os.Stdout)
-				return ErrNotDefined
+				return nil, nil, ErrNotDefined
 			}
 
 			o.pv = c.v
@@ -178,7 +183,7 @@ func (app App) Run(args []string) (appRunErr error) {
 				if sub == nil {
 					fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
 					app.Help(os.Stdout)
-					return ErrNotDefined
+					return nil, nil, ErrNotDefined
 				} else {
 					if !extra {
 						sub.pv = c.v
@@ -197,7 +202,7 @@ func (app App) Run(args []string) (appRunErr error) {
 
 					_, defErr := call("Init", c.v, cmdStack, c.args)
 					if defErr != nil {
-						return defErr
+						return nil, nil, defErr
 					}
 				}
 			} else {
@@ -225,7 +230,7 @@ func (app App) Run(args []string) (appRunErr error) {
 			}
 		}
 
-		return helpErr
+		return nil, nil, helpErr
 	}
 
 	// call Before->Run->After
@@ -239,38 +244,42 @@ func (app App) Run(args []string) (appRunErr error) {
 		if callErr == nil && beforeErr != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
 			c.Help(os.Stdout)
-			return beforeErr
+			return nil, nil, beforeErr
 		}
 
-		defer func(c *cmd) {
-			// After()
-			callErr, afterErr := call("After", c.v, cmdStack, c.args)
-			if callErr != nil && appRunErr == nil {
-				appRunErr = afterErr
+		if doRun {
+			defer func(c *cmd) {
+				// After()
+				callErr, afterErr := call("After", c.v, cmdStack, c.args)
+				if callErr != nil && appRunErr == nil {
+					appRunErr = afterErr
+				}
+			}(c)
+		}
+	}
+
+	if doRun {
+		funcName := "Run"
+
+		callErr, runErr := call(funcName, c.v, cmdStack, c.args)
+
+		if callErr != nil {
+			if c == &app.cmd {
+				app.Help(os.Stdout)
+			} else {
+				c.Help(os.Stdout)
 			}
-		}(c)
-	}
-
-	funcName := "Run"
-
-	callErr, runErr := call(funcName, c.v, cmdStack, c.args)
-
-	if callErr != nil {
-		if c == &app.cmd {
-			app.Help(os.Stdout)
-		} else {
-			c.Help(os.Stdout)
+			//return ErrNotDefined
+			return nil, nil, nil
 		}
-		//return ErrNotDefined
-		return nil
+
+		if runErr != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", runErr)
+			return nil, nil, runErr
+		}
 	}
 
-	if runErr != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", runErr)
-		return runErr
-	}
-
-	return nil
+	return c.v.Interface(), c.args, nil
 }
 
 func gather(ttgt reflect.Type, tgt *cmd) error {
