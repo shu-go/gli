@@ -298,6 +298,11 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 			panic("not supported yet")
 		}
 
+		// goto next if not public field
+		if ft.Name[:1] != strings.ToUpper(ft.Name[:1]) {
+			continue
+		}
+
 		iscmd := false
 		{ // struct is skipped if a non-Parsable
 			if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
