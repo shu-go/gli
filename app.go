@@ -300,6 +300,19 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 
 		// goto next if not public field
 		if ft.Name[:1] != strings.ToUpper(ft.Name[:1]) {
+			if ft.Name == "help" {
+				tag := ft.Tag
+
+				// help description
+				if tv, ok := tag.Lookup("help"); ok && tgt.help == "" {
+					tgt.help = strings.TrimSpace(tv)
+				}
+				// usage description
+				if tv, ok := tag.Lookup("usage"); ok && tgt.usage == "" {
+					tgt.usage = strings.TrimSpace(tv)
+				}
+			}
+
 			continue
 		}
 
