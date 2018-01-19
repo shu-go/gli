@@ -8,7 +8,6 @@ import (
 
 	"bitbucket.org/shu/clise"
 	"bitbucket.org/shu/gli"
-	"bitbucket.org/shu/rog"
 )
 
 var (
@@ -48,7 +47,6 @@ func (g TodoGlobal) Before() error {
 		verbose = func(format string, v ...interface{}) {
 			fmt.Fprintf(os.Stderr, format, v...)
 		}
-		rog.EnableDebug()
 	}
 	return nil
 }
