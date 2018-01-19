@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -30,6 +31,10 @@ func New(ptrSt interface{}) App {
 	err := gather(v.Type(), &app.cmd)
 	if err != nil {
 		panic(err.Error())
+	}
+
+	if exe, err := os.Executable(); err == nil {
+		app.Name = filepath.Base(exe)
 	}
 
 	return app
