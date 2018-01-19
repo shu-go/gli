@@ -262,6 +262,25 @@ Option value overwriting:
 2. env tag
 3. Init hook function
 
+## Example9: alternative help and usage of commnands
+
+```go
+type Global struct {
+    Sub1 SubCommand1 `cli:"s1"  help:"a command"  usage:"s1 [anything]"`
+    Sub2 SubCommand2 `cli:"s2"` // no help and usage
+}
+
+type SubCommand2 struct {
+    help struct{} `help:"anothe command" usage:"s2 [something]"`
+}
+```
+
+Both Sub1 and Sub2 are handled as have same tags.
+
+A dummy definition of `help` is required.
+The `help` can have any type.
+And it may have a tag help or usage or both tags. (tag cli is ignored)
+
 ----
 
 Copyright 2018 Shuhei Kubota

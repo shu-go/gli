@@ -19,7 +19,7 @@ type TodoGlobal struct {
 	List TodoListCmd `cli:"ls,list"  help:"list todoes"  usage:"todo list [--done|--undone] [filter words...]"`
 	Add  TodoAddCmd  `help:"add todoes" usage:"todo add {ITEM}...\nNote: multiple ITEMs are OK."`
 	Del  TodoDelCmd  `cli:"del,delete" help:"delete todoes" usage:"todo delete [--num NUM] [filter words...]"`
-	Done TodoDoneCmd `cli:"done" help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
+	Done TodoDoneCmd `cli:"done"`
 
 	File    string `cli:"file=FILE_PATH" default:"./todo.json" help:"file name of a storage"`
 	Verbose bool   `cli:"v,verbose" help:"verbose output"`
@@ -37,6 +37,8 @@ type TodoDelCmd struct {
 }
 
 type TodoDoneCmd struct {
+	help struct{} `help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
+
 	Num    *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
 	Undone bool         `cli:"undone,un,u" help:"mark as UNDONE (default to done)"`
 }
