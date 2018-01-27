@@ -63,7 +63,7 @@ func TestNoHook(t *testing.T) {
 	g = orig
 	e := nohookExtra0{}
 	app.AddExtraCommand(&e, "extra", "extra usage")
-	tgt, tgtargs, err = app.Run([]string{"--opt0 abc", "extra --extopt0 def", "extsub1 --extopt1 ghi j k l"}, false)
+	tgt, _, _ = app.Run([]string{"--opt0 abc", "extra --extopt0 def", "extsub1 --extopt1 ghi j k l"}, false)
 	if extsub1, ok := tgt.(*nohookExtra1); ok {
 		gotwant.Test(t, *extsub1, nohookExtra1{ExtOpt1: "ghi"})
 	} else {

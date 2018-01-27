@@ -178,7 +178,12 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 
 		} else if name != "" && o != nil {
 			//reflect.ValueOf(o.cmd.self).Field(o.fieldIdx).Set(reflect.ValueOf(t))
-			setOptValue(o.pv.Elem().Field(o.fieldIdx), t)
+			err := setOptValue(o.pv.Elem().Field(o.fieldIdx), t)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "option %s: %v\n\n", name, err)
+				app.Help(os.Stdout)
+				return nil, nil, err
+			}
 
 			name = ""
 
@@ -189,26 +194,26 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 					fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
 					app.Help(os.Stdout)
 					return nil, nil, ErrNotDefined
-				} else {
-					if !extra {
-						sub.pv = c.v
-						subt := c.v.Type().Elem().Field(sub.fieldIdx).Type
-						if subt.Kind() == reflect.Ptr {
-							sub.v = reflect.New(subt.Elem())
-							c.v.Elem().Field(sub.fieldIdx).Set(sub.v)
-						} else {
-							sub.v = c.v.Elem().Field(sub.fieldIdx).Addr()
-						}
-					}
-					c = sub
-					cmdStack = append(cmdStack, c)
-					c.setMembersReferMe()
-					c.setDefaultValues()
+				}
 
-					_, defErr := call("Init", c.v, cmdStack, c.args)
-					if defErr != nil {
-						return nil, nil, defErr
+				if !extra {
+					sub.pv = c.v
+					subt := c.v.Type().Elem().Field(sub.fieldIdx).Type
+					if subt.Kind() == reflect.Ptr {
+						sub.v = reflect.New(subt.Elem())
+						c.v.Elem().Field(sub.fieldIdx).Set(sub.v)
+					} else {
+						sub.v = c.v.Elem().Field(sub.fieldIdx).Addr()
 					}
+				}
+				c = sub
+				cmdStack = append(cmdStack, c)
+				c.setMembersReferMe()
+				c.setDefaultValues()
+
+				_, defErr := call("Init", c.v, cmdStack, c.args)
+				if defErr != nil {
+					return nil, nil, defErr
 				}
 			} else {
 				c.args = append(c.args, t)
@@ -438,8 +443,7 @@ func call(funcName string, cmd reflect.Value, cmdStack []*cmd, args []string) (c
 		}
 	}
 
-	var retv []reflect.Value
-	retv = methv.Call(argv)
+	retv := methv.Call(argv)
 
 	if len(retv) == 0 {
 		return nil, nil
@@ -518,6 +522,4 @@ func token(src string) (string, int) {
 		}
 		return src, len(src)
 	}
-
-	return "", 0
 }
