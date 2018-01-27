@@ -31,12 +31,12 @@ type cmd struct {
 	fieldIdx int
 }
 
-type extraCmdInit func(*cmd) error
+type extraCmdInit func(*cmd)
 
+// Usage is an optional argument to AddExtraCommand.
 func Usage(usage string) extraCmdInit {
-	return func(c *cmd) error {
+	return func(c *cmd) {
 		c.usage = usage
-		return nil
 	}
 }
 
@@ -191,12 +191,12 @@ func (c *cmd) setMembersReferMe() {
 func (c *cmd) setDefaultValues() {
 	for _, o := range c.opts {
 		if o.defvalue != "" {
-			setOptValue(o.pv.Elem().Field(o.fieldIdx), o.defvalue)
+			_ = setOptValue(o.pv.Elem().Field(o.fieldIdx), o.defvalue)
 		}
 		if o.env != "" {
 			envvalue := os.Getenv(o.env)
 			if envvalue != "" {
-				setOptValue(o.pv.Elem().Field(o.fieldIdx), envvalue)
+				_ = setOptValue(o.pv.Elem().Field(o.fieldIdx), envvalue)
 			}
 		}
 	}

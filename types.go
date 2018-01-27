@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 type Parsable interface {
@@ -77,12 +76,10 @@ func (l StrList) Contains(s string) bool {
 type IntList []int
 
 func (l *IntList) Parse(str string) error {
-	size := int(unsafe.Sizeof(int(0)))
-
 	list := strings.Split(str, ",")
 	for i := 0; i < len(list); i++ {
 		s := strings.TrimSpace(list[i])
-		i, err := strconv.ParseInt(s, 10, size*8)
+		i, err := strconv.ParseInt(s, 10, 0)
 		if err != nil {
 			return err
 		}
