@@ -36,7 +36,7 @@ type delCmd struct {
 }
 
 type doneCmd struct {
-	help struct{} `help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
+	_ struct{} `help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
 
 	Num    *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
 	Undone bool         `cli:"undone,un,u" help:"mark as UNDONE (default to done)"`
