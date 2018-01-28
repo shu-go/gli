@@ -309,8 +309,8 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 		}
 
 		// goto next if not public field
-		if ft.Name[:1] != strings.ToUpper(ft.Name[:1]) {
-			if ft.Name == "help" {
+		if ft.Name[:1] == strings.ToLower(ft.Name[:1]) {
+			if ft.Name == "help" || ft.Name == "_" {
 				tag := ft.Tag
 
 				// help description
