@@ -272,6 +272,9 @@ type Global struct {
 
 type SubCommand2 struct {
     help struct{} `help:"anothe command" usage:"s2 [something]"`
+
+    // Underscore is also OK.
+    //_ struct{} `help:"anothe command" usage:"s2 [something]"` 
 }
 ```
 
