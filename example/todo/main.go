@@ -14,35 +14,35 @@ var (
 	verbose = func(fmt string, v ...interface{}) { /* nop */ }
 )
 
-type TodoGlobal struct {
-	List TodoListCmd `cli:"ls,list"  help:"list todoes"  usage:"todo list [--done|--undone] [filter words...]"`
-	Add  TodoAddCmd  `help:"add todoes" usage:"todo add {ITEM}...\nNote: multiple ITEMs are OK."`
-	Del  TodoDelCmd  `cli:"del,delete" help:"delete todoes" usage:"todo delete [--num NUM] [filter words...]"`
-	Done TodoDoneCmd `cli:"done"`
+type globalCmd struct {
+	List listCmd `cli:"ls,list"  help:"list todoes"  usage:"todo list [--done|--undone] [filter words...]"`
+	Add  addCmd  `help:"add todoes" usage:"todo add {ITEM}...\nNote: multiple ITEMs are OK."`
+	Del  delCmd  `cli:"del,delete" help:"delete todoes" usage:"todo delete [--num NUM] [filter words...]"`
+	Done doneCmd `cli:"done"`
 
 	File    string `cli:"file=FILE_PATH" default:"./todo.json" help:"file name of a storage"`
 	Verbose bool   `cli:"v,verbose" help:"verbose output"`
 }
 
-type TodoListCmd struct {
+type listCmd struct {
 	Done   bool `cli:"done" help:"display only done items"`
 	Undone bool `cli:"undone,un,u" help:"display only undone items"`
 }
 
-type TodoAddCmd struct{}
+type addCmd struct{}
 
-type TodoDelCmd struct {
+type delCmd struct {
 	Num *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
 }
 
-type TodoDoneCmd struct {
+type doneCmd struct {
 	help struct{} `help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
 
 	Num    *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
 	Undone bool         `cli:"undone,un,u" help:"mark as UNDONE (default to done)"`
 }
 
-func (g TodoGlobal) Before() error {
+func (g globalCmd) Before() error {
 	if g.Verbose {
 		verbose = func(format string, v ...interface{}) {
 			fmt.Fprintf(os.Stderr, format, v...)
@@ -51,13 +51,13 @@ func (g TodoGlobal) Before() error {
 	return nil
 }
 
-func (ls TodoListCmd) Run(global *TodoGlobal, args []string) error {
+func (ls listCmd) Run(global *globalCmd, args []string) error {
 	if ls.Done && ls.Undone {
 		//fmt.Println("--done and --undone is exclusive")
 		return fmt.Errorf("--done and --undone is exclusive")
 	}
 
-	list := TodoList{}
+	list := todoList{}
 	if err := list.Load(global.File); err != nil {
 		return err
 	}
@@ -98,19 +98,19 @@ func (ls TodoListCmd) Run(global *TodoGlobal, args []string) error {
 	return nil
 }
 
-func (add TodoAddCmd) Run(global *TodoGlobal, args []string) error {
+func (add addCmd) Run(global *globalCmd, args []string) error {
 	if len(args) == 0 {
 		fmt.Println("no args")
 		return nil
 	}
 
-	list := TodoList{}
+	list := todoList{}
 	if err := list.Load(global.File); err != nil {
 		return err
 	}
 
 	for _, c := range args {
-		t := Todo{
+		t := todo{
 			Num:       -1,
 			Content:   c,
 			CreatedAt: time.Now(),
@@ -118,20 +118,16 @@ func (add TodoAddCmd) Run(global *TodoGlobal, args []string) error {
 		list = append(list, t)
 	}
 
-	if err := list.Save(global.File); err != nil {
-		return err
-	}
-
-	return nil
+	return list.Save(global.File)
 }
 
-func (del TodoDelCmd) Run(global *TodoGlobal, args []string) error {
+func (del delCmd) Run(global *globalCmd, args []string) error {
 	if del.Num == nil && len(args) == 0 {
 		fmt.Println("no conditions")
 		return nil
 	}
 
-	list := TodoList{}
+	list := todoList{}
 	if err := list.Load(global.File); err != nil {
 		return err
 	}
@@ -151,20 +147,16 @@ func (del TodoDelCmd) Run(global *TodoGlobal, args []string) error {
 		return true
 	})
 
-	if err := list.Save(global.File); err != nil {
-		return err
-	}
-
-	return nil
+	return list.Save(global.File)
 }
 
-func (done TodoDoneCmd) Run(global *TodoGlobal, args []string) error {
+func (done doneCmd) Run(global *globalCmd, args []string) error {
 	if done.Num == nil && len(args) == 0 {
 		fmt.Println("no conditions")
 		return nil
 	}
 
-	list := TodoList{}
+	list := todoList{}
 	if err := list.Load(global.File); err != nil {
 		return err
 	}
@@ -190,28 +182,24 @@ func (done TodoDoneCmd) Run(global *TodoGlobal, args []string) error {
 		}
 	}
 
-	if err := list.Save(global.File); err != nil {
-		return err
-	}
-
-	return nil
+	return list.Save(global.File)
 }
 
 func main() {
 
-	app := gli.New(&TodoGlobal{})
+	app := gli.New(&globalCmd{})
 	app.Name = "todo"
 	app.Desc = "gli example app"
 	app.Version = "beta"
 	app.Copyright = "(C) 2017 Shuhei Kubota"
 
-	app.AddExtraCommand(&Hello{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
+	app.AddExtraCommand(&helloCmd{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
 
 	app.Run(os.Args)
 }
 
-type Hello struct{}
+type helloCmd struct{}
 
-func (hello Hello) Run() {
+func (hello helloCmd) Run() {
 	fmt.Println("hello!")
 }
