@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-type Todo struct {
+type todo struct {
 	Num       int
 	Content   string
 	Done      bool
 	CreatedAt time.Time
 }
 
-func (t Todo) String() string {
+func (t todo) String() string {
 	done := "[ ]"
 	if t.Done {
 		done = "[*]"
@@ -24,9 +24,9 @@ func (t Todo) String() string {
 	return fmt.Sprintf("%d: %s %s", t.Num, done, t.Content)
 }
 
-type TodoList []Todo
+type todoList []todo
 
-func (list *TodoList) Load(fileName string) error {
+func (list *todoList) Load(fileName string) error {
 	if list == nil {
 		panic("list is nil")
 	}
@@ -54,7 +54,7 @@ func (list *TodoList) Load(fileName string) error {
 	return nil
 }
 
-func (list *TodoList) Save(fileName string) error {
+func (list *todoList) Save(fileName string) error {
 	if list == nil {
 		panic("list is nil")
 	}
@@ -67,7 +67,7 @@ func (list *TodoList) Save(fileName string) error {
 		}
 		return (*list)[i].CreatedAt.Before((*list)[j].CreatedAt)
 	})
-	for i, _ := range *list {
+	for i := range *list {
 		(*list)[i].Num = i + 1
 	}
 
