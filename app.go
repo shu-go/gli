@@ -479,15 +479,20 @@ func call(funcName string, cmd reflect.Value, cmdStack []*cmd, args []string) (c
 
 	retv := methv.Call(argv)
 
+	return nil, returnErr(retv)
+}
+
+func returnErr(retv []reflect.Value) error {
 	if len(retv) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	mayerr := retv[len(retv)-1].Interface()
 	if err, ok := mayerr.(error); ok {
-		return nil, err
+		return err
 	}
-	return nil, nil
+
+	return nil
 }
 
 func findStructByType(stack []*cmd, typ reflect.Type) interface{} {
