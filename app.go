@@ -9,8 +9,11 @@ import (
 	"strings"
 )
 
+// App is a parsed global command holder.
 type App struct {
 	cmd cmd
+
+	CliTag, HelpTag, UsageTag, DefaultTag, EnvTag string
 
 	SuppressErrorOutput bool
 
@@ -20,6 +23,7 @@ type App struct {
 	Copyright string
 }
 
+// New creates new App object.
 func New(ptrSt interface{}) App {
 	v := reflect.ValueOf(ptrSt)
 	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
@@ -28,9 +32,15 @@ func New(ptrSt interface{}) App {
 
 	app := App{
 		cmd: cmd{v: v},
+
+		CliTag:     "cli",
+		HelpTag:    "help",
+		UsageTag:   "usage",
+		DefaultTag: "default",
+		EnvTag:     "env",
 	}
 
-	err := gather(v.Type(), &app.cmd)
+	err := app.gather(v.Type(), &app.cmd)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -42,6 +52,18 @@ func New(ptrSt interface{}) App {
 	return app
 }
 
+func (app *App) Rescan(ptrSt interface{}) error {
+	v := reflect.ValueOf(ptrSt)
+	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
+		panic("not a pointer to a struct")
+	}
+
+	app.cmd = cmd{v: v}
+
+	return app.gather(v.Type(), &app.cmd)
+}
+
+// Help displays help messages.
 func (app App) Help(w io.Writer) {
 	appinfo := app.Name
 	if app.Desc != "" {
@@ -68,6 +90,7 @@ Help sub commands:
 	}
 }
 
+// AddExtraCommand adds a sub command.
 func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...extraCmdInit) {
 	v := reflect.ValueOf(ptrSt)
 	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
@@ -87,15 +110,17 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...
 		init(&c)
 	}
 
-	err := gather(v.Type(), &c)
+	err := app.gather(v.Type(), &c)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	app.cmd.extras = append(app.cmd.extras, &c)
-
 }
 
+// Run parses args and fills global command struct that is passed via
+// New(&globalCmd).
+// If 2nd argument optDoRun is false, Run method of a command is not called.
 func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []string, appRunErr error) {
 	c := &app.cmd
 
@@ -306,7 +331,7 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 	return c.v.Interface(), c.args, nil
 }
 
-func gather(ttgt reflect.Type, tgt *cmd) error {
+func (app App) gather(ttgt reflect.Type, tgt *cmd) error {
 	if ttgt.Kind() == reflect.Ptr {
 		ttgt = ttgt.Elem()
 	}
@@ -328,11 +353,11 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 				tag := ft.Tag
 
 				// help description
-				if tv, ok := tag.Lookup("help"); ok && tgt.help == "" {
+				if tv, ok := tag.Lookup(app.HelpTag); ok && tgt.help == "" {
 					tgt.help = strings.TrimSpace(tv)
 				}
 				// usage description
-				if tv, ok := tag.Lookup("usage"); ok && tgt.usage == "" {
+				if tv, ok := tag.Lookup(app.UsageTag); ok && tgt.usage == "" {
 					tgt.usage = strings.TrimSpace(tv)
 				}
 			}
@@ -364,7 +389,7 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 		var placeholder string
 
 		// names
-		if tv, ok := tag.Lookup("cli"); ok {
+		if tv, ok := tag.Lookup(app.CliTag); ok {
 			clinames := strings.Split(tv, ",")
 			for _, n := range clinames {
 				n = strings.TrimSpace(n)
@@ -380,19 +405,19 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 			names = append(names, strings.ToLower(name))
 		}
 		// default value
-		if tv, ok := tag.Lookup("default"); ok {
+		if tv, ok := tag.Lookup(app.DefaultTag); ok {
 			defvalue = strings.TrimSpace(tv)
 		}
 		// default environment variable
-		if tv, ok := tag.Lookup("env"); ok {
+		if tv, ok := tag.Lookup(app.EnvTag); ok {
 			env = strings.TrimSpace(tv)
 		}
 		// help description
-		if tv, ok := tag.Lookup("help"); ok {
+		if tv, ok := tag.Lookup(app.HelpTag); ok {
 			help = strings.TrimSpace(tv)
 		}
 		// usage description
-		if tv, ok := tag.Lookup("usage"); ok {
+		if tv, ok := tag.Lookup(app.UsageTag); ok {
 			usage = strings.TrimSpace(tv)
 		}
 
@@ -405,7 +430,7 @@ func gather(ttgt reflect.Type, tgt *cmd) error {
 			}
 			tgt.subs = append(tgt.subs, sub)
 
-			err := gather(ft.Type, sub)
+			err := app.gather(ft.Type, sub)
 			if err != nil {
 				return err
 			}
