@@ -410,22 +410,11 @@ func (app App) gather(ttgt reflect.Type, tgt *cmd) error {
 		if len(names) == 0 {
 			names = append(names, strings.ToLower(name))
 		}
-		// default value
-		if tv, ok := tag.Lookup(app.DefaultTag); ok {
-			defvalue = strings.TrimSpace(tv)
-		}
-		// default environment variable
-		if tv, ok := tag.Lookup(app.EnvTag); ok {
-			env = strings.TrimSpace(tv)
-		}
-		// help description
-		if tv, ok := tag.Lookup(app.HelpTag); ok {
-			help = strings.TrimSpace(tv)
-		}
-		// usage description
-		if tv, ok := tag.Lookup(app.UsageTag); ok {
-			usage = strings.TrimSpace(tv)
-		}
+
+		defvalue = strings.TrimSpace(tag.Get(app.DefaultTag))
+		env = strings.TrimSpace(tag.Get(app.EnvTag))
+		help = strings.TrimSpace(tag.Get(app.HelpTag))
+		usage = strings.TrimSpace(tag.Get(app.UsageTag))
 
 		if iscmd /* f.Kind() == reflect.Struct */ {
 			sub := &cmd{
