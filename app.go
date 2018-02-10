@@ -82,8 +82,8 @@ func (app App) Help(w io.Writer) {
 
 	fmt.Fprintln(w, `
 Help sub commands:
-  help          `+app.Name+` help subcommnad subsubcommand
-  version       show version`)
+  help     `+app.Name+` help subcommnad subsubcommand
+  version  show version`)
 
 	if app.Copyright != "" {
 		fmt.Fprintf(w, "\n%s\n", app.Copyright)
