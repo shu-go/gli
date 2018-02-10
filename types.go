@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Parsable represents an string->YOURTYPE convertible
 type Parsable interface {
 	Parse(str string) error
 }

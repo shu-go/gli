@@ -45,7 +45,7 @@ func TestNoHook(t *testing.T) {
 
 	g := orig
 	app := gli.New(&g)
-	tgt, tgtargs, err := app.Run([]string{"--opt0 abc", "sub1 --opt1 def", "sub12 --opt12 ghi j k l"}, false)
+	tgt, tgtargs, err := app.Parse([]string{"--opt0 abc", "sub1 --opt1 def", "sub12 --opt12 ghi j k l"})
 
 	gotwant.Test(t, err, nil)
 	if sub12, ok := tgt.(*nohookSub12); ok {
@@ -63,11 +63,11 @@ func TestNoHook(t *testing.T) {
 	g = orig
 	e := nohookExtra0{}
 	app.AddExtraCommand(&e, "extra", "extra usage")
-	tgt, _, _ = app.Run([]string{"--opt0 abc", "extra --extopt0 def", "extsub1 --extopt1 ghi j k l"}, false)
+	tgt, _, _ = app.Parse([]string{"--opt0 abc", "extra --extopt0 def", "extsub1 --extopt1 ghi j k l"})
 	if extsub1, ok := tgt.(*nohookExtra1); ok {
 		gotwant.Test(t, *extsub1, nohookExtra1{ExtOpt1: "ghi"})
 	} else {
-		t.Fatal("tgt is not *nohookExtra1 but %T", tgt)
+		t.Fatalf("tgt is not *nohookExtra1 but %T", tgt)
 	}
 	gotwant.Test(t, e.ExtOpt0, "def")
 	gotwant.Test(t, e.ExtSub1.ExtOpt1, "ghi")

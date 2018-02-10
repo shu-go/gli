@@ -120,14 +120,20 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...
 
 // Run parses args and fills global command struct that is passed via
 // New(&globalCmd).
-// If 2nd argument optDoRun is false, Run method of a command is not called.
-func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []string, appRunErr error) {
-	c := &app.cmd
+func (app App) Run(args []string) (appRunErr error) {
+	_, _, err := app.exec(args, true)
+	return err
+}
 
-	doRun := true
-	if len(optDoRun) > 0 && !optDoRun[0] {
-		doRun = false
-	}
+// Parse parses args and fills global command struct that is passed via
+// New(&globalCmd) and returns it.
+// The Before/Run/After method of a command is not called. (Init method is colled)
+func (app App) Parse(args []string) (tgt interface{}, tgtargs []string, appRunErr error) {
+	return app.exec(args, false)
+}
+
+func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string, appRunErr error) {
+	c := &app.cmd
 
 	if len(args) == len(os.Args) && len(args) > 0 && args[0] == os.Args[0] {
 		args = args[1:]
@@ -284,17 +290,17 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 	// Before: root->sub->subsub
 	// After: subsub->sub->root *deferred*
 
-	for _, c := range cmdStack {
-		callErr, beforeErr := call("Before", c.v, cmdStack, c.args)
-		if callErr == nil && beforeErr != nil {
-			if !app.SuppressErrorOutput {
-				fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
-				c.Help(os.Stdout)
+	if doRun {
+		for _, c := range cmdStack {
+			callErr, beforeErr := call("Before", c.v, cmdStack, c.args)
+			if callErr == nil && beforeErr != nil {
+				if !app.SuppressErrorOutput {
+					fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
+					c.Help(os.Stdout)
+				}
+				return nil, nil, beforeErr
 			}
-			return nil, nil, beforeErr
-		}
 
-		if doRun {
 			defer func(c *cmd) {
 				// After()
 				callErr, afterErr := call("After", c.v, cmdStack, c.args)
