@@ -27,6 +27,7 @@ func TestDefault(t *testing.T) {
 	wantg.Value3 = gli.Range{Min: "a", Max: "z"}
 
 	app := gli.New(&g)
+	app.SuppressErrorOutput = true
 	app.Run([]string{})
 	gotwant.Test(t, g, wantg)
 
@@ -103,4 +104,39 @@ func TestEnv(t *testing.T) {
 		os.Setenv("VALUE1", "")
 		os.Setenv("VALUE2", "")
 	})
+}
+
+func TestTagName(t *testing.T) {
+	g := struct {
+		Sub *struct {
+			_      struct{} `bbb:"help of subsub" ccc:"usage of subsub"`
+			Value1 string   `aaa:"v1" bbb:"help" ccc:"usage" ddd:"default" eee:"ENV"`
+		} `aaa:"subsub"`
+	}{}
+
+	app := gli.New(&g)
+	app.SuppressErrorOutput = true
+	app.CliTag = "aaa"
+	app.HelpTag = "bbb"
+	app.UsageTag = "ccc"
+	app.DefaultTag = "ddd"
+	app.EnvTag = "eee"
+	err := app.Rescan(&g)
+	gotwant.Error(t, err, nil)
+
+	app.Help(os.Stdout)
+	app.Run([]string{"subsub help"})
+
+	_, _, err = app.Run([]string{"subsub --v1=subsub_no_v1"}, false)
+	gotwant.Error(t, err, nil)
+	gotwant.Test(t, g.Sub.Value1, "subsub_no_v1")
+
+	_, _, err = app.Run([]string{"subsub"}, false)
+	gotwant.Error(t, err, nil)
+	gotwant.Test(t, g.Sub.Value1, "default")
+
+	os.Setenv("ENV", "env")
+	_, _, err = app.Run([]string{"subsub"}, false)
+	gotwant.Error(t, err, nil)
+	gotwant.Test(t, g.Sub.Value1, "env")
 }
