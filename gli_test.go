@@ -101,11 +101,11 @@ func TestRun2(t *testing.T) {
 	gotwant.Test(t, o.Verbose, false)
 
 	o = inito
-	_, _, err := app.Run([]string{"-verbose"})
+	err := app.Run([]string{"-verbose"})
 	gotwant.Test(t, o.Verbose, true)
 	gotwant.Error(t, err, nil)
 
 	o = inito
-	_, _, err = app.Run([]string{"-varbose"})
+	err = app.Run([]string{"-varbose"})
 	gotwant.Error(t, err, ErrNotDefined)
 }
