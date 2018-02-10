@@ -70,7 +70,7 @@ func (c cmd) Help(w io.Writer) {
 			}
 		}
 
-		width += ((width + 1) % 8)
+		width += 2
 
 		for i, n := range names {
 			spaces := strings.Repeat(" ", width-len(n))
@@ -113,10 +113,10 @@ func (c cmd) Help(w io.Writer) {
 			}
 		}
 
-		width += ((width + 1) % 8)
+		width += 2
 
 		for i, n := range names {
-			spaces := strings.Repeat(" ", 1+width-runewidth.StringWidth(n))
+			spaces := strings.Repeat(" ", width-runewidth.StringWidth(n))
 
 			def := ""
 			if len(defdesc[i]) > 0 {
