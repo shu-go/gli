@@ -12,6 +12,8 @@ import (
 type App struct {
 	cmd cmd
 
+	SuppressErrorOutput bool
+
 	// global help header
 	Name, Desc, Usage, Version string
 	// global help footer
@@ -147,8 +149,10 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 				for i, ch := range name {
 					o = c.findOpt(string(ch))
 					if o == nil {
-						fmt.Fprintf(os.Stdout, "option %s %v\n\n", string(ch), ErrNotDefined)
-						app.Help(os.Stdout)
+						if !app.SuppressErrorOutput {
+							fmt.Fprintf(os.Stdout, "option %s %v\n\n", string(ch), ErrNotDefined)
+							app.Help(os.Stdout)
+						}
 						return nil, nil, ErrNotDefined
 					}
 
@@ -160,8 +164,10 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 			}
 
 			if o == nil {
-				fmt.Fprintf(os.Stderr, "option %s %v\n\n", name, ErrNotDefined)
-				app.Help(os.Stdout)
+				if !app.SuppressErrorOutput {
+					fmt.Fprintf(os.Stderr, "option %s %v\n\n", name, ErrNotDefined)
+					app.Help(os.Stdout)
+				}
 				return nil, nil, ErrNotDefined
 			}
 
@@ -180,8 +186,10 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 			//reflect.ValueOf(o.cmd.self).Field(o.fieldIdx).Set(reflect.ValueOf(t))
 			err := setOptValue(o.pv.Elem().Field(o.fieldIdx), t)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "option %s: %v\n\n", name, err)
-				app.Help(os.Stdout)
+				if !app.SuppressErrorOutput {
+					fmt.Fprintf(os.Stderr, "option %s: %v\n\n", name, err)
+					app.Help(os.Stdout)
+				}
 				return nil, nil, err
 			}
 
@@ -191,8 +199,10 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 			if len(c.subs)+len(c.extras) > 0 {
 				sub, extra := c.findSubCmd(t)
 				if sub == nil {
-					fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
-					app.Help(os.Stdout)
+					if !app.SuppressErrorOutput {
+						fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
+						app.Help(os.Stdout)
+					}
 					return nil, nil, ErrNotDefined
 				}
 
@@ -252,8 +262,10 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 	for _, c := range cmdStack {
 		callErr, beforeErr := call("Before", c.v, cmdStack, c.args)
 		if callErr == nil && beforeErr != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
-			c.Help(os.Stdout)
+			if !app.SuppressErrorOutput {
+				fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
+				c.Help(os.Stdout)
+			}
 			return nil, nil, beforeErr
 		}
 
@@ -284,7 +296,9 @@ func (app App) Run(args []string, optDoRun ...bool) (tgt interface{}, tgtargs []
 		}
 
 		if runErr != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", runErr)
+			if !app.SuppressErrorOutput {
+				fmt.Fprintf(os.Stderr, "%v\n", runErr)
+			}
 			return nil, nil, runErr
 		}
 	}
