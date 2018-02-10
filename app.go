@@ -372,15 +372,10 @@ func (app App) gather(ttgt reflect.Type, tgt *cmd) error {
 		}
 
 		iscmd := false
-		{ // struct is skipped if a non-Parsable
-			if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
-				ok := ft.Type.Implements(reflect.TypeOf((*Parsable)(nil)).Elem())
-				if !ok {
-					ok = reflect.PtrTo(ft.Type).Implements(reflect.TypeOf((*Parsable)(nil)).Elem())
-					if !ok {
-						iscmd = true
-					}
-				}
+		// struct is skipped if a non-Parsable
+		if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
+			if !isStructImplements(ft.Type, reflect.TypeOf((*Parsable)(nil)).Elem()) {
+				iscmd = true
 			}
 		}
 
@@ -561,4 +556,12 @@ func token(src string) (string, int) {
 		}
 		return src, len(src)
 	}
+}
+
+func isStructImplements(st reflect.Type, iface reflect.Type) bool {
+	if st.Kind() != reflect.Struct && !(st.Kind() == reflect.Ptr && st.Elem().Kind() == reflect.Struct) {
+		return false
+	}
+
+	return reflect.PtrTo(st).Implements(iface) || st.Implements(iface)
 }
