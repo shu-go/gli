@@ -3,7 +3,6 @@ package gli_test
 import (
 	"testing"
 
-	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
 )
 
@@ -44,7 +43,7 @@ func TestNoHook(t *testing.T) {
 	orig := nohookGlobal{}
 
 	g := orig
-	app := gli.New(&g)
+	app := newApp(&g)
 	tgt, tgtargs, err := app.Parse([]string{"--opt0 abc", "sub1 --opt1 def", "sub12 --opt12 ghi j k l"})
 
 	gotwant.Test(t, err, nil)

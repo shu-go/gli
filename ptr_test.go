@@ -3,7 +3,6 @@ package gli_test
 import (
 	"testing"
 
-	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
 )
 
@@ -13,7 +12,7 @@ func TestPtrOpt(t *testing.T) {
 			Int *int
 			Str *string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{""})
 		gotwant.Test(t, g.Int, (*int)(nil))
 		gotwant.Test(t, g.Str, (*string)(nil))
@@ -23,7 +22,7 @@ func TestPtrOpt(t *testing.T) {
 			Int *int
 			Str *string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--int 123 --str aaa"})
 		gotwant.Test(t, *g.Int, 123)
 		gotwant.Test(t, *g.Str, "aaa")
@@ -53,7 +52,7 @@ func (c *PtrSub2) Run() {
 
 func TestPtrSubcmd(t *testing.T) {
 	g := PtrGlobal{}
-	app := gli.New(&g)
+	app := newApp(&g)
 	app.Run([]string{"sub1 --opt1 abc"})
 	gotwant.Test(t, subresult, "abc")
 	gotwant.Test(t, g.Sub1.Opt1, "abc")
