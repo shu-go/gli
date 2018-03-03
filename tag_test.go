@@ -8,6 +8,14 @@ import (
 	"bitbucket.org/shu/gotwant"
 )
 
+func newApp(ptr interface{}) gli.App {
+	app := gli.New(ptr)
+	app.SuppressErrorOutput = true
+	app.Stdout = nil
+	app.Stderr = nil
+	return app
+}
+
 func TestDefault(t *testing.T) {
 	g := struct {
 		Value1 string    `default:"abc"`
@@ -26,7 +34,7 @@ func TestDefault(t *testing.T) {
 	wantg.Value2 = -123
 	wantg.Value3 = gli.Range{Min: "a", Max: "z"}
 
-	app := gli.New(&g)
+	app := newApp(&g)
 	app.SuppressErrorOutput = true
 	app.Run([]string{})
 	gotwant.Test(t, g, wantg)
@@ -40,7 +48,7 @@ func TestDefault(t *testing.T) {
 	wantg.Sub.Value6 = gli.Range{Min: "", Max: "z"}
 
 	g = orig
-	app = gli.New(&g)
+	app = newApp(&g)
 	app.Run([]string{"sub"})
 	gotwant.Test(t, g, wantg)
 }
@@ -57,7 +65,7 @@ func TestEnv(t *testing.T) {
 		wantg.Value1 = ""
 		wantg.Value2 = 0
 
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{})
 		gotwant.Test(t, g, wantg)
 
@@ -68,7 +76,7 @@ func TestEnv(t *testing.T) {
 		wantg = orig
 		wantg.Value1 = "zxc"
 		wantg.Value2 = -999
-		app = gli.New(&g)
+		app = newApp(&g)
 		app.Run([]string{})
 		gotwant.Test(t, g, wantg)
 
@@ -86,7 +94,7 @@ func TestEnv(t *testing.T) {
 		wantg.Value1 = "poi"
 		wantg.Value2 = 987
 
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{})
 		gotwant.Test(t, g, wantg)
 
@@ -97,7 +105,7 @@ func TestEnv(t *testing.T) {
 		wantg = orig
 		wantg.Value1 = "zxc"
 		wantg.Value2 = -999
-		app = gli.New(&g)
+		app = newApp(&g)
 		app.Run([]string{})
 		gotwant.Test(t, g, wantg)
 
@@ -114,7 +122,7 @@ func TestTagName(t *testing.T) {
 		} `aaa:"subsub"`
 	}{}
 
-	app := gli.New(&g)
+	app := newApp(&g)
 	app.SuppressErrorOutput = true
 	app.CliTag = "aaa"
 	app.HelpTag = "bbb"
@@ -124,7 +132,7 @@ func TestTagName(t *testing.T) {
 	err := app.Rescan(&g)
 	gotwant.Error(t, err, nil)
 
-	app.Help(os.Stdout)
+	//app.Help(os.Stdout)
 	app.Run([]string{"subsub help"})
 
 	_, _, err = app.Parse([]string{"subsub --v1=subsub_no_v1"})

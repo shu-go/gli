@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
 )
 
@@ -48,7 +47,7 @@ func TestCommandRun(t *testing.T) {
 		g := struct {
 			Sub1 Sub1
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"sub1"})
 		gotwant.Test(t, subresult, "sub1")
 	})
@@ -56,7 +55,7 @@ func TestCommandRun(t *testing.T) {
 		g := struct {
 			Sub2 Sub2
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"sub2 --name namae"})
 		gotwant.Test(t, subresult, "sub2namae")
 	})
@@ -65,7 +64,7 @@ func TestCommandRun(t *testing.T) {
 			Sub3 Sub3
 			Name string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--name guro-baru sub3 --name namae"})
 		gotwant.Test(t, subresult, "guro-barusub3namae")
 	})
@@ -77,7 +76,7 @@ func TestCommandRun(t *testing.T) {
 			}
 			Name string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--name guro-baru sub4holder --name holder sub4 --name namae4"})
 		gotwant.Test(t, subresult, "guro-barusub4namae4")
 	})
@@ -123,7 +122,7 @@ func TestCommandRunArgs(t *testing.T) {
 		g := struct {
 			Sub Sub51
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"sub a b c"})
 		gotwant.Test(t, subresult, "sub51")
 	})
@@ -131,7 +130,7 @@ func TestCommandRunArgs(t *testing.T) {
 		g := struct {
 			Sub Sub52
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"sub a b c"})
 		gotwant.Test(t, subresult, "sub52a b c")
 	})
@@ -140,7 +139,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Sub  Sub53
 			Name string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--name global sub a b c"})
 		gotwant.Test(t, subresult, "globalsub53a b c")
 	})
@@ -149,7 +148,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Sub  Sub54
 			Name string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--name global sub a b c"})
 		gotwant.Test(t, subresult, "globalsub54a b c")
 	})
@@ -158,7 +157,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Sub  Sub55
 			Name string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--name global sub a b c"})
 		gotwant.Test(t, subresult, "globalsub55")
 	})

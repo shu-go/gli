@@ -14,7 +14,7 @@ func TestTypes(t *testing.T) {
 			Int  int
 			Uint uint
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--int -123  --uint 321"})
 		gotwant.Test(t, g.Int, -123)
 		gotwant.Test(t, g.Uint, uint(321), gotwant.Format("%#v"))
@@ -23,7 +23,7 @@ func TestTypes(t *testing.T) {
 		g := struct {
 			Float float32
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--float 0.25"})
 		gotwant.Test(t, g.Float, float32(0.25))
 	})
@@ -31,7 +31,7 @@ func TestTypes(t *testing.T) {
 		g := struct {
 			String string
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--string 123"})
 		gotwant.Test(t, g.String, "123")
 	})
@@ -39,7 +39,7 @@ func TestTypes(t *testing.T) {
 		g := struct {
 			D gli.Duration
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"-d 1m"})
 		gotwant.Test(t, g.D, gli.Duration(time.Minute))
 	})
@@ -47,7 +47,7 @@ func TestTypes(t *testing.T) {
 		g := struct {
 			Range gli.Range
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--range 1:5"})
 		gotwant.Test(t, g.Range.Min, "1")
 		gotwant.Test(t, g.Range.Max, "5")
@@ -62,7 +62,7 @@ func TestTypes(t *testing.T) {
 		g := struct {
 			List gli.StrList
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--list a,b,c"})
 		gotwant.Test(t, g.List, gli.StrList([]string{"a", "b", "c"}))
 	})
@@ -70,7 +70,7 @@ func TestTypes(t *testing.T) {
 		g := struct {
 			List gli.StrList
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--list a,b,c --list d,e,f"})
 		gotwant.Test(t, g.List, gli.StrList([]string{"a", "b", "c", "d", "e", "f"}))
 	})
@@ -79,7 +79,7 @@ func TestTypes(t *testing.T) {
 			List    *gli.StrList
 			NilList *gli.StrList
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--list a,b,c --list d,e,f"})
 		gotwant.Test(t, g.List, (*gli.StrList)(&[]string{"a", "b", "c", "d", "e", "f"}))
 		gotwant.Test(t, g.NilList, (*gli.StrList)(nil), gotwant.Format("%#v"))
@@ -89,7 +89,7 @@ func TestTypes(t *testing.T) {
 			List1 *gli.IntList `default:"1,10,100"`
 			List2 *gli.IntList `default:"1,10,100"`
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"--list2 2,3,4"})
 		gotwant.Test(t, g.List1, (*gli.IntList)(&[]int{1, 10, 100}))
 		gotwant.Test(t, g.List2, (*gli.IntList)(&[]int{1, 10, 100, 2, 3, 4}))

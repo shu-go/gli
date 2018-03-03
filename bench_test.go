@@ -2,8 +2,6 @@ package gli_test
 
 import (
 	"testing"
-
-	"bitbucket.org/shu/gli"
 )
 
 type BGlobal struct {
@@ -31,7 +29,7 @@ func Benchmark(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		g := BGlobal{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"sub2", "--int2", "2222", "--str2=hogehoge --bool1"})
 	}
 }

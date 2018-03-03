@@ -3,7 +3,6 @@ package gli_test
 import (
 	"testing"
 
-	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
 )
 
@@ -12,7 +11,7 @@ func TestSimple(t *testing.T) {
 		g := struct {
 			Name string `cli:"n"`
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"-n hoge"})
 		gotwant.Test(t, g.Name, "hoge")
 	})
@@ -22,7 +21,7 @@ func TestSimple(t *testing.T) {
 				Name string `cli:"n"`
 			} `cli:"co,command"`
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.Run([]string{"co -n hoge"})
 		gotwant.Test(t, g.Command.Name, "hoge")
 	})
@@ -31,7 +30,7 @@ func TestSimple(t *testing.T) {
 		ex := struct {
 			Name string `cli:"n"`
 		}{}
-		app := gli.New(&g)
+		app := newApp(&g)
 		app.AddExtraCommand(&ex, "extra", "extra command")
 		app.Run([]string{"extra -n hoge"})
 		gotwant.Test(t, ex.Name, "hoge")

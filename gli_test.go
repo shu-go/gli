@@ -11,18 +11,24 @@ func TestStructure1(t *testing.T) {
 		Option1 string
 	}{}
 	app := New(&o)
+	app.Stdout = nil
+	app.Stderr = nil
 	gotwant.Test(t, app.cmd.opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
 
 	oo := struct {
 		Option1 string `cli:"o1,o2"`
 	}{}
 	app = New(&oo)
+	app.Stdout = nil
+	app.Stderr = nil
 	gotwant.Test(t, app.cmd.opts[0].names, []string{"o1", "o2"}, gotwant.Format("%#v"))
 
 	ooo := struct {
 		Option1 string `env:"ENVIRON1" default:"hogehoge"`
 	}{}
 	app = New(&ooo)
+	app.Stdout = nil
+	app.Stderr = nil
 	gotwant.Test(t, app.cmd.opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
 	gotwant.Test(t, app.cmd.opts[0].env, "ENVIRON1", gotwant.Format("%#v"))
 	gotwant.Test(t, app.cmd.opts[0].defvalue, "hogehoge", gotwant.Format("%#v"))
@@ -35,6 +41,8 @@ func TestStructure2(t *testing.T) {
 		}
 	}{}
 	app := New(&o)
+	app.Stdout = nil
+	app.Stderr = nil
 	gotwant.Test(t, len(app.cmd.opts), 0, gotwant.Format("%#v"))
 	gotwant.Test(t, app.cmd.subs[0].names, []string{"sub1"}, gotwant.Format("%#v"))
 	gotwant.Test(t, len(app.cmd.subs[0].opts), 1, gotwant.Format("%#v"))
@@ -48,6 +56,8 @@ func TestStructure3(t *testing.T) {
 		}
 	}{}
 	app := New(&o)
+	app.Stdout = nil
+	app.Stderr = nil
 	gotwant.Test(t, len(app.cmd.opts), 0, gotwant.Format("%#v"))
 	gotwant.Test(t, app.cmd.subs[0].names, []string{"sub1"}, gotwant.Format("%#v"))
 	gotwant.Test(t, len(app.cmd.subs[0].opts), 1, gotwant.Format("%#v"))
@@ -60,6 +70,8 @@ func TestRun1(t *testing.T) {
 		Verbose bool
 	}{}
 	app := New(&o)
+	app.Stdout = nil
+	app.Stderr = nil
 	app.Run([]string{"--name=ichi"})
 	gotwant.Test(t, o.Name, "ichi")
 
@@ -82,6 +94,8 @@ func TestRun2(t *testing.T) {
 	inito := o
 
 	app := New(&o)
+	app.Stdout = nil
+	app.Stderr = nil
 	app.Run([]string{"--name=ichi"})
 	gotwant.Test(t, o.Name, "ichi")
 

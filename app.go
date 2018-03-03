@@ -16,6 +16,7 @@ type App struct {
 	CliTag, HelpTag, UsageTag, DefaultTag, EnvTag string
 
 	SuppressErrorOutput bool
+	Stdout, Stderr      *os.File
 
 	// global help header
 	Name, Desc, Usage, Version string
@@ -38,6 +39,9 @@ func New(ptrSt interface{}) App {
 		UsageTag:   "usage",
 		DefaultTag: "default",
 		EnvTag:     "env",
+
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 
 	err := app.gather(v.Type(), &app.cmd)
@@ -167,7 +171,7 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 		}
 
 		if len(cmdStack) == 1 && (t == "version") {
-			fmt.Fprintln(os.Stdout, app.Version)
+			fmt.Fprintln(app.Stdout, app.Version)
 			return nil, nil, nil
 		}
 
@@ -181,8 +185,8 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 					o = c.findOpt(string(ch))
 					if o == nil {
 						if !app.SuppressErrorOutput {
-							fmt.Fprintf(os.Stdout, "option %s %v\n\n", string(ch), ErrNotDefined)
-							app.Help(os.Stdout)
+							fmt.Fprintf(app.Stdout, "option %s %v\n\n", string(ch), ErrNotDefined)
+							app.Help(app.Stdout)
 						}
 						return nil, nil, ErrNotDefined
 					}
@@ -196,8 +200,8 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 
 			if o == nil {
 				if !app.SuppressErrorOutput {
-					fmt.Fprintf(os.Stderr, "option %s %v\n\n", name, ErrNotDefined)
-					app.Help(os.Stdout)
+					fmt.Fprintf(app.Stderr, "option %s %v\n\n", name, ErrNotDefined)
+					app.Help(app.Stdout)
 				}
 				return nil, nil, ErrNotDefined
 			}
@@ -218,8 +222,8 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 			err := setOptValue(o.pv.Elem().Field(o.fieldIdx), t)
 			if err != nil {
 				if !app.SuppressErrorOutput {
-					fmt.Fprintf(os.Stderr, "option %s: %v\n\n", name, err)
-					app.Help(os.Stdout)
+					fmt.Fprintf(app.Stderr, "option %s: %v\n\n", name, err)
+					app.Help(app.Stdout)
 				}
 				return nil, nil, err
 			}
@@ -231,8 +235,8 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 				sub, extra := c.findSubCmd(t)
 				if sub == nil {
 					if !app.SuppressErrorOutput {
-						fmt.Fprintf(os.Stderr, "command %s %v\n\n", t, ErrNotDefined)
-						app.Help(os.Stdout)
+						fmt.Fprintf(app.Stderr, "command %s %v\n\n", t, ErrNotDefined)
+						app.Help(app.Stdout)
 					}
 					return nil, nil, ErrNotDefined
 				}
@@ -275,9 +279,9 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 
 		if callErr != nil {
 			if c.v == app.cmd.v {
-				app.Help(os.Stdout)
+				app.Help(app.Stdout)
 			} else {
-				c.Help(os.Stdout)
+				c.Help(app.Stdout)
 			}
 		}
 
@@ -295,8 +299,8 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 			callErr, beforeErr := call("Before", c.v, cmdStack, c.args)
 			if callErr == nil && beforeErr != nil {
 				if !app.SuppressErrorOutput {
-					fmt.Fprintf(os.Stderr, "%v\n", beforeErr)
-					c.Help(os.Stdout)
+					fmt.Fprintf(app.Stderr, "%v\n", beforeErr)
+					c.Help(app.Stdout)
 				}
 				return nil, nil, beforeErr
 			}
@@ -318,9 +322,9 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 
 		if callErr != nil {
 			if c == &app.cmd {
-				app.Help(os.Stdout)
+				app.Help(app.Stdout)
 			} else {
-				c.Help(os.Stdout)
+				c.Help(app.Stdout)
 			}
 			//return ErrNotDefined
 			return nil, nil, nil
@@ -328,7 +332,7 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 
 		if runErr != nil {
 			if !app.SuppressErrorOutput {
-				fmt.Fprintf(os.Stderr, "%v\n", runErr)
+				fmt.Fprintf(app.Stderr, "%v\n", runErr)
 			}
 			return nil, nil, runErr
 		}
