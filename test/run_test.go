@@ -1,4 +1,4 @@
-package gli_test
+package test
 
 import (
 	"strings"
