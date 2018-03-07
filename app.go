@@ -108,7 +108,12 @@ func (app *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...
 	for i, n := range nameslice {
 		nameslice[i] = strings.TrimSpace(n)
 	}
-	c := cmd{names: nameslice, help: help, v: v}
+	c := cmd{
+		names:  nameslice,
+		help:   help,
+		v:      v,
+		parent: &app.cmd,
+	}
 
 	for _, init := range inits {
 		init(&c)
@@ -421,6 +426,7 @@ func (app App) gather(ttgt reflect.Type, tgt *cmd) error {
 				help:     help,
 				usage:    usage,
 				fieldIdx: i,
+				parent:   tgt,
 			}
 			tgt.subs = append(tgt.subs, sub)
 
