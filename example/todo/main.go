@@ -200,8 +200,20 @@ func main() {
 	}
 }
 
-type helloCmd struct{}
+type helloCmd struct {
+	Goodbye helloGoodbyeCmd
+
+	HOption1 string
+}
+
+type helloGoodbyeCmd struct {
+	BOption1 string
+}
 
 func (hello helloCmd) Run() {
 	fmt.Println("hello!")
+}
+
+func (goodbye helloGoodbyeCmd) Run() {
+	fmt.Println("good bye!")
 }

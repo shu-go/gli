@@ -8,12 +8,13 @@ import (
 	"sort"
 	"strings"
 
-	runewidth "github.com/mattn/go-runewidth"
+	"github.com/mattn/go-runewidth"
 )
 
 type cmd struct {
 	names []string
 
+	parent *cmd
 	subs   []*cmd
 	extras []*cmd
 
@@ -124,6 +125,68 @@ func (c cmd) Help(w io.Writer) {
 			}
 
 			fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
+		}
+	}
+
+	curr := &c
+	for {
+		curr = curr.parent
+		if curr == nil {
+			break
+		}
+
+		if len(curr.opts) > 0 {
+			currname := "Global"
+			if len(curr.names) > 0 {
+				currname = "Outer " + curr.names[0]
+			}
+
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "%s Options:\n", currname)
+
+			var names []string
+			var helps []string
+			var defdesc []string
+			width := 0
+
+			for _, o := range curr.opts {
+				var onames []string
+				onames = append(onames, o.names...)
+				for i, n := range onames {
+					if len(n) == 1 {
+						onames[i] = "-" + n
+					} else {
+						onames[i] = "--" + n
+					}
+				}
+
+				sort.Slice(onames, func(i, j int) bool { return len(onames[i]) < len(onames[j]) })
+				n := strings.Join(onames, ", ")
+				if o.placeholder != "" {
+					n += " " + o.placeholder
+				}
+				names = append(names, n)
+				helps = append(helps, o.help)
+				defdesc = append(defdesc, o.defvalue)
+
+				w := runewidth.StringWidth(n)
+				if width < w {
+					width = w
+				}
+			}
+
+			width += 2
+
+			for i, n := range names {
+				spaces := strings.Repeat(" ", width-runewidth.StringWidth(n))
+
+				def := ""
+				if len(defdesc[i]) > 0 {
+					def = " (default: " + defdesc[i] + ")"
+				}
+
+				fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
+			}
 		}
 	}
 
