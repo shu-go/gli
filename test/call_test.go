@@ -59,7 +59,7 @@ func TestCall(t *testing.T) {
 		g := callGlobal{}
 		app := newApp(&g)
 		err := app.Run([]string{"sub"})
-		gotwant.Error(t, err, nil)
+		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, g.result, ":global_before:sub_before:sub_run:sub_after:global_after")
 	})
 	t.Run("SubSub", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestCall(t *testing.T) {
 		g := callGlobal{}
 		app := newApp(&g)
 		err := app.Run([]string{"sub subsub"})
-		gotwant.Error(t, err, nil)
+		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, g.result, ":global_before:sub_before:subsub_before:subsub_run:subsub_after:sub_after:global_after")
 	})
 }
@@ -97,6 +97,6 @@ func TestRunSignature(t *testing.T) {
 	g := callGlobal2{}
 	app := newApp(&g)
 	err := app.Run([]string{"--opt rei sub1 --opt ichi sub2 --opt ni sub3 --opt san shi go roku"})
-	gotwant.Error(t, err, nil)
+	gotwant.TestError(t, err, nil)
 	gotwant.Test(t, g.result, "global:rei, sub1:ichi, sub2:ni, sub3:san, args:[shi go roku]")
 }

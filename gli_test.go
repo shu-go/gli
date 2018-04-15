@@ -117,9 +117,9 @@ func TestRun2(t *testing.T) {
 	o = inito
 	err := app.Run([]string{"-verbose"})
 	gotwant.Test(t, o.Verbose, true)
-	gotwant.Error(t, err, nil)
+	gotwant.TestError(t, err, nil)
 
 	o = inito
 	err = app.Run([]string{"-varbose"})
-	gotwant.Error(t, err, ErrNotDefined)
+	gotwant.TestError(t, err, ErrNotDefined)
 }
