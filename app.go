@@ -168,7 +168,7 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 		if l == 0 {
 			break
 		}
-		arg = arg[l:]
+		arg = strings.TrimSpace(arg[l:])
 
 		if len(cmdStack) == 1 && (t == "help" || t == "--help" || t == "-h") {
 			helpMode = true
@@ -513,19 +513,18 @@ func findStructByType(stack []*cmd, typ reflect.Type) interface{} {
 }
 
 func token(src string) (string, int) {
-	src = strings.TrimSpace(src)
 	if len(src) == 0 {
 		return "", 0
 	}
 
 	switch src[0] {
 	case '-':
-		for i := 0; i < len(src); i++ {
+		for i := 1; i < len(src); i++ {
 			if src[i] == '=' {
-				return src[:i], i + 1
+				return src[:i], i //+ 1
 			}
 			if src[i] == '"' {
-				return src[:i], i + 1
+				return src[:i], i //+ 1
 			}
 			if src[i] == ' ' {
 				return src[:i], i + 1
@@ -537,13 +536,13 @@ func token(src string) (string, int) {
 		return "=", 1
 
 	case '"':
-		for i := 0; i < len(src); i++ {
+		for i := 1; i < len(src); i++ {
 			if src[i] == '\\' {
 				i++
 				continue
 			}
 			if src[i] == '"' {
-				return src[:i], i + 1
+				return src[1:i], i + 1
 			}
 		}
 		return src, len(src)
@@ -555,10 +554,10 @@ func token(src string) (string, int) {
 				continue
 			}
 			if src[i] == '=' {
-				return src[:i], i + 1
+				return src[:i], i //+ 1
 			}
 			if src[i] == '"' {
-				return src[:i], i + 1
+				return src[:i], i //+ 1
 			}
 			if src[i] == ' ' {
 				return src[:i], i + 1
