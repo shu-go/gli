@@ -145,7 +145,8 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 	c := &app.cmd
 
 	if len(args) == len(os.Args) && len(args) > 0 && args[0] == os.Args[0] {
-		args = args[1:]
+		args = make([]string, len(os.Args)-1)
+		copy(args, os.Args[1:])
 	}
 
 	cmdStack := []*cmd{c}
