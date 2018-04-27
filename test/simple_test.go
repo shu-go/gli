@@ -12,7 +12,7 @@ func TestSimple(t *testing.T) {
 			Name string `cli:"n"`
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"-n hoge"})
+		app.Run([]string{"-n", "hoge"})
 		gotwant.Test(t, g.Name, "hoge")
 	})
 	t.Run("g.Command.Name", func(t *testing.T) {
@@ -22,7 +22,7 @@ func TestSimple(t *testing.T) {
 			} `cli:"co,command"`
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"co -n hoge"})
+		app.Run([]string{"co", "-n", "hoge"})
 		gotwant.Test(t, g.Command.Name, "hoge")
 	})
 	t.Run("ex.Name", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestSimple(t *testing.T) {
 		}{}
 		app := newApp(&g)
 		app.AddExtraCommand(&ex, "extra", "extra command")
-		app.Run([]string{"extra -n hoge"})
+		app.Run([]string{"extra", "-n", "hoge"})
 		gotwant.Test(t, ex.Name, "hoge")
 	})
 }

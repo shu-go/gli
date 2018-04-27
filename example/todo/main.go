@@ -203,15 +203,19 @@ func main() {
 type helloCmd struct {
 	Goodbye helloGoodbyeCmd
 
-	HOption1 string
+	Name string
 }
 
 type helloGoodbyeCmd struct {
-	BOption1 string
 }
 
 func (hello helloCmd) Run() {
-	fmt.Println("hello!")
+	fmt.Printf("%#v\n", os.Args)
+	if hello.Name != "" {
+		fmt.Println("hello, " + hello.Name + "!")
+	} else {
+		fmt.Println("hello!")
+	}
 }
 
 func (goodbye helloGoodbyeCmd) Run() {

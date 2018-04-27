@@ -135,7 +135,7 @@ func TestTagName(t *testing.T) {
 	//app.Help(os.Stdout)
 	app.Run([]string{"subsub help"})
 
-	_, _, err = app.Parse([]string{"subsub --v1=subsub_no_v1"})
+	_, _, err = app.Parse([]string{"subsub", "--v1=subsub_no_v1"})
 	gotwant.TestError(t, err, nil)
 	gotwant.Test(t, g.Sub.Value1, "subsub_no_v1")
 

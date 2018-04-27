@@ -163,13 +163,11 @@ func (app App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []strin
 
 	helpMode := false
 
-	arg := strings.TrimSpace(strings.Join(args, " "))
 	for {
-		t, l := token(arg)
+		t, l := token(&args)
 		if l == 0 {
 			break
 		}
-		arg = strings.TrimSpace(arg[l:])
 
 		if len(cmdStack) == 1 && (t == "help" || t == "--help" || t == "-h") {
 			helpMode = true
@@ -513,59 +511,38 @@ func findStructByType(stack []*cmd, typ reflect.Type) interface{} {
 	return nil
 }
 
-func token(src string) (string, int) {
+func token(args *[]string) (t string, length int) {
+	if len(*args) == 0 {
+		return "", 0
+	}
+
+	src := (*args)[0]
 	if len(src) == 0 {
 		return "", 0
 	}
 
 	switch src[0] {
-	case '-':
-		for i := 1; i < len(src); i++ {
-			if src[i] == '=' {
-				return src[:i], i //+ 1
-			}
-			if src[i] == '"' {
-				return src[:i], i //+ 1
-			}
-			if src[i] == ' ' {
-				return src[:i], i + 1
-			}
-		}
-		return src, len(src)
-
 	case '=':
-		return "=", 1
-
-	case '"':
-		for i := 1; i < len(src); i++ {
-			if src[i] == '\\' {
-				i++
-				continue
-			}
-			if src[i] == '"' {
-				return src[1:i], i + 1
-			}
-		}
-		return src, len(src)
+		t, length = "=", 1
 
 	default:
 		for i := 0; i < len(src); i++ {
-			if src[i] == '\\' {
-				i++
-				continue
-			}
 			if src[i] == '=' {
-				return src[:i], i //+ 1
-			}
-			if src[i] == '"' {
-				return src[:i], i //+ 1
-			}
-			if src[i] == ' ' {
-				return src[:i], i + 1
+				t, length = src[:i], i //+ 1
+				break
 			}
 		}
-		return src, len(src)
+		if length == 0 { // centinel
+			t, length = src, len(src)
+		}
 	}
+
+	// consume curr token on args
+	(*args)[0] = (*args)[0][length:]
+	if len((*args)[0]) == 0 {
+		*args = (*args)[1:]
+	}
+	return t, length
 }
 
 func isStructImplements(st reflect.Type, iface reflect.Type) bool {

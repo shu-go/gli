@@ -23,7 +23,7 @@ func TestPtrOpt(t *testing.T) {
 			Str *string
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"--int 123 --str aaa"})
+		app.Run([]string{"--int", "123", "--str", "aaa"})
 		gotwant.Test(t, *g.Int, 123)
 		gotwant.Test(t, *g.Str, "aaa")
 	})
@@ -53,7 +53,7 @@ func (c *PtrSub2) Run() {
 func TestPtrSubcmd(t *testing.T) {
 	g := PtrGlobal{}
 	app := newApp(&g)
-	app.Run([]string{"sub1 --opt1 abc"})
+	app.Run([]string{"sub1", "--opt1", "abc"})
 	gotwant.Test(t, subresult, "abc")
 	gotwant.Test(t, g.Sub1.Opt1, "abc")
 	gotwant.Test(t, g.Sub2, (*PtrSub2)(nil))
