@@ -6,6 +6,10 @@ import (
 	"bitbucket.org/shu/gotwant"
 )
 
+func init() {
+	//rog.EnableDebug()
+}
+
 func TestStructure1(t *testing.T) {
 	o := struct {
 		Option1 string

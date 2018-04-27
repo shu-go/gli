@@ -56,7 +56,7 @@ func TestCommandRun(t *testing.T) {
 			Sub2 Sub2
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"sub2 --name namae"})
+		app.Run([]string{"sub2", "--name", "namae"})
 		gotwant.Test(t, subresult, "sub2namae")
 	})
 	t.Run("Global", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestCommandRun(t *testing.T) {
 			Name string
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"--name guro-baru sub3 --name namae"})
+		app.Run([]string{"--name", "guro-baru", "sub3", "--name", "namae"})
 		gotwant.Test(t, subresult, "guro-barusub3namae")
 	})
 	t.Run("Nest", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestCommandRun(t *testing.T) {
 			Name string
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"--name guro-baru sub4holder --name holder sub4 --name namae4"})
+		app.Run([]string{"--name", "guro-baru", "sub4holder", "--name", "holder", "sub4", "--name", "namae4"})
 		gotwant.Test(t, subresult, "guro-barusub4namae4")
 	})
 }
@@ -123,7 +123,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Sub Sub51
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"sub a b c"})
+		app.Run([]string{"sub", "a", "b", "c"})
 		gotwant.Test(t, subresult, "sub51")
 	})
 	t.Run("Args", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Sub Sub52
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"sub a b c"})
+		app.Run([]string{"sub", "a", "b", "c"})
 		gotwant.Test(t, subresult, "sub52a b c")
 	})
 	t.Run("GlobalArgs", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Name string
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"--name global sub a b c"})
+		app.Run([]string{"--name", "global", "sub", "a", "b", "c"})
 		gotwant.Test(t, subresult, "globalsub53a b c")
 	})
 	t.Run("ArgsGlobal", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Name string
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"--name global sub a b c"})
+		app.Run([]string{"--name", "global", "sub", "a", "b", "c"})
 		gotwant.Test(t, subresult, "globalsub54a b c")
 	})
 	t.Run("Global", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestCommandRunArgs(t *testing.T) {
 			Name string
 		}{}
 		app := newApp(&g)
-		app.Run([]string{"--name global sub a b c"})
+		app.Run([]string{"--name", "global", "sub", "a", "b", "c"})
 		gotwant.Test(t, subresult, "globalsub55")
 	})
 }
