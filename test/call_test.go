@@ -12,6 +12,10 @@ type callGlobal struct {
 	Sub    callSub
 }
 
+func (g *callGlobal) Init() {
+	g.result += ":global_init"
+}
+
 func (g *callGlobal) Before() {
 	g.result += ":global_before"
 }
@@ -28,6 +32,10 @@ type callSub struct {
 	SubSub callSubSub
 }
 
+func (s callSub) Init(g *callGlobal) {
+	g.result += ":sub_init"
+}
+
 func (s callSub) Before(g *callGlobal) {
 	g.result += ":sub_before"
 }
@@ -41,6 +49,10 @@ func (s callSub) After(g *callGlobal) {
 }
 
 type callSubSub struct{}
+
+func (s callSubSub) Init(g *callGlobal) {
+	g.result += ":subsub_init"
+}
 
 func (s callSubSub) Before(g *callGlobal) {
 	g.result += ":subsub_before"
@@ -60,15 +72,15 @@ func TestCall(t *testing.T) {
 		app := newApp(&g)
 		err := app.Run([]string{"sub"})
 		gotwant.TestError(t, err, nil)
-		gotwant.Test(t, g.result, ":global_before:sub_before:sub_run:sub_after:global_after")
+		gotwant.Test(t, g.result, ":global_init:sub_init:global_before:sub_before:sub_run:sub_after:global_after")
 	})
-	t.Run("SubSub", func(t *testing.T) {
 
+	t.Run("SubSub", func(t *testing.T) {
 		g := callGlobal{}
 		app := newApp(&g)
 		err := app.Run([]string{"sub", "subsub"})
 		gotwant.TestError(t, err, nil)
-		gotwant.Test(t, g.result, ":global_before:sub_before:subsub_before:subsub_run:subsub_after:sub_after:global_after")
+		gotwant.Test(t, g.result, ":global_init:sub_init:subsub_init:global_before:sub_before:subsub_before:subsub_run:subsub_after:sub_after:global_after")
 	})
 }
 
