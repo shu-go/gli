@@ -520,6 +520,17 @@ func token(args *[]string) (t string, length int) {
 	case '=':
 		t, length = "=", 1
 
+	case '"':
+		for i := 1; i < len(src); i++ {
+			if src[i] == '"' {
+				t, length = src[1:i], i-2 //+ 1
+				break
+			}
+		}
+		if length == 0 { // centinel
+			t, length = src[1:], len(src)-1
+		}
+
 	default:
 		for i := 0; i < len(src); i++ {
 			if src[i] == '=' {
