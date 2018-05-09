@@ -109,4 +109,16 @@ func TestTypes(t *testing.T) {
 		gotwant.Test(t, g.List1, (*gli.IntList)(&[]int{1, 10, 100}))
 		gotwant.Test(t, g.List2, (*gli.IntList)(&[]int{1, 10, 100, 2, 3, 4}))
 	})
+	t.Run("gli.Map", func(t *testing.T) {
+		g := struct {
+			Map1 gli.Map `cli:"D"`
+		}{}
+		app := newApp(&g)
+		app.Run([]string{})
+		gotwant.Test(t, g.Map1, (gli.Map)(nil))
+
+		app = newApp(&g)
+		app.Run([]string{"-D", "hoge=hogehoge", "-D", "moge:mogemoge"})
+		gotwant.Test(t, g.Map1, (gli.Map)(map[string]string{"hoge": "hogehoge", "moge": "mogemoge"}))
+	})
 }

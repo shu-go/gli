@@ -356,11 +356,6 @@ func (app App) gather(ttgt reflect.Type, tgt *cmd) error {
 	for i := 0; i < ttgt.NumField(); i++ {
 		ft := ttgt.Field(i)
 
-		switch ft.Type.Kind() {
-		case reflect.Map:
-			panic("not supported yet")
-		}
-
 		// goto next if not public field
 		if ft.Name[:1] == strings.ToLower(ft.Name[:1]) {
 			if ft.Name == "help" || ft.Name == "_" {
