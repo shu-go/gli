@@ -1,10 +1,13 @@
 package gli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"bitbucket.org/shu/rog"
 )
 
 // Parsable represents an string->YOURTYPE convertible
@@ -97,4 +100,33 @@ func (l IntList) Contains(i int) bool {
 		}
 	}
 	return false
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+type Map map[string]string
+
+func (m *Map) Parse(str string) error {
+	if *m == nil {
+		*m = make(map[string]string)
+	}
+
+	poseq := strings.Index(str, "=")
+	poscl := strings.Index(str, ":")
+	pos := -1
+	if poseq != -1 {
+		pos = poseq
+	}
+	if poscl != -1 && (poscl < pos || pos == -1) {
+		pos = poscl
+	}
+	if pos == -1 {
+		rog.Print(str, pos, poseq, poscl)
+		return errors.New("no separator in Map")
+	}
+
+	key, value := str[:pos], str[pos+1:]
+	(*m)[key] = value
+
+	return nil
 }
