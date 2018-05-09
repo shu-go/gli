@@ -112,13 +112,15 @@ func TestTypes(t *testing.T) {
 	t.Run("gli.Map", func(t *testing.T) {
 		g := struct {
 			Map1 gli.Map `cli:"D"`
+			Map2 gli.Map `cli:"E" default:"a:b"`
 		}{}
 		app := newApp(&g)
 		app.Run([]string{})
 		gotwant.Test(t, g.Map1, (gli.Map)(nil))
+		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"a": "b"}))
 
 		app = newApp(&g)
-		app.Run([]string{"-D", "hoge=hogehoge", "-D", "moge:mogemoge"})
+		app.Run([]string{"-D", `"hoge=hogehoge"`, "-D", "moge:mogemoge"})
 		gotwant.Test(t, g.Map1, (gli.Map)(map[string]string{"hoge": "hogehoge", "moge": "mogemoge"}))
 	})
 }
