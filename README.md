@@ -154,7 +154,7 @@ func (subsub *mySubSub) Run() error {
 
 ## Example5: No Hook
 
-Using gli to get values. No Run() implementeda.
+Using gli to get values. No Run() implemented.
 
 ```go
 type Global struct {
@@ -262,7 +262,7 @@ Option value overwriting:
 2. env tag
 3. Init hook function
 
-## Example9: alternative help and usage of commnands
+## Example9: alternative help and usage of commands
 
 ```go
 type Global struct {
@@ -271,18 +271,14 @@ type Global struct {
 }
 
 type SubCommand2 struct {
-    help struct{} `help:"anothe command" usage:"s2 [something]"`
+    help struct{} `help:"another command" usage:"s2 [something]"`
 
     // Underscore is also OK.
-    //_ struct{} `help:"anothe command" usage:"s2 [something]"` 
+    //_ struct{} `help:"another command" usage:"s2 [something]"` 
 }
 ```
 
 Both Sub1 and Sub2 are handled as have same tags.
-
-A dummy definition of `help` is required.
-The `help` can have any type.
-And it may have a tag help or usage or both tags. (tag cli is ignored)
 
 ----
 
