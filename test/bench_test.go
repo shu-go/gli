@@ -17,7 +17,7 @@ type BSub2 struct {
 	Int4 int `cli:"j,int4"`
 
 	Str1 string `default:"hoge"`
-	Str2 string `env:"STR2" defualt:"str2"`
+	Str2 string `env:"STR2" default:"str2"`
 
 	Bool1 bool
 }
