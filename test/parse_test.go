@@ -3,8 +3,8 @@ package test
 import (
 	"testing"
 
-	"bitbucket.org/shu/gotwant"
 	"bitbucket.org/shu_go/gli"
+	"bitbucket.org/shu_go/gotwant"
 )
 
 type quotedGlobal struct {

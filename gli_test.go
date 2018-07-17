@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"bitbucket.org/shu/gotwant"
 	"bitbucket.org/shu_go/gli"
+	"bitbucket.org/shu_go/gotwant"
 )
 
 func TestParseSingle(t *testing.T) {
