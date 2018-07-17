@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"bitbucket.org/shu/clise"
-	"bitbucket.org/shu/gli"
+	"bitbucket.org/shu_go/gli"
 )
 
 var (
@@ -192,7 +192,7 @@ func main() {
 	app.Version = "beta"
 	app.Copyright = "(C) 2017 Shuhei Kubota"
 
-	app.AddExtraCommand(&helloCmd{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
+	//app.AddExtraCommand(&helloCmd{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
 
 	err := app.Run(os.Args)
 	if err != nil {

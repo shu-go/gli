@@ -8,62 +8,107 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mattn/go-runewidth"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
-type cmd struct {
-	names []string
+type command struct {
+	Names []string
 
-	parent *cmd
-	subs   []*cmd
-	extras []*cmd
+	Parent *command
+	Subs   []*command
+	Extras []*command
 
-	opts []*opt
-	args []string
+	Options []*option
 
-	help  string
-	usage string
+	Args []string
 
-	//
+	Help  string
+	Usage string
 
-	v reflect.Value
-
-	pv       reflect.Value
+	SelfV    reflect.Value
+	OwnerV   reflect.Value
 	fieldIdx int
 }
 
-type extraCmdInit func(*cmd)
+func (c command) String() string {
+	return fmt.Sprintf("command{Names:%v, Opts:%v, Subs:%v, Extras:%v, Args:%v}", c.Names, c.Options, c.Subs, c.Extras, c.Args)
+}
 
-// Usage is an optional argument to AddExtraCommand.
-func Usage(usage string) extraCmdInit {
-	return func(c *cmd) {
-		c.usage = usage
+func (c *command) FindOptionExact(name string) *option {
+	for _, o := range c.Options {
+		for _, n := range o.Names {
+			if n == name {
+				return o
+			}
+		}
+	}
+	return nil
+}
+
+func (c *command) FindCommandExact(name string) (cmd *command, isextra bool) {
+	for _, c := range c.Subs {
+		for _, n := range c.Names {
+			if n == name {
+				return c, false
+			}
+		}
+	}
+	for _, c := range c.Extras {
+		for _, n := range c.Names {
+			if n == name {
+				return c, true
+			}
+		}
+	}
+	return nil, false
+}
+
+func (c *command) setMembersReferMe() {
+	for _, o := range c.Options {
+		o.OwnerV = c.SelfV
+	}
+	for _, s := range c.Subs {
+		s.OwnerV = c.SelfV
 	}
 }
 
-func (c cmd) Help(w io.Writer) {
-	if len(c.names) > 0 {
-		name := longestName(c.names)
-		fmt.Fprintf(w, "command %s - %s\n", name, c.help)
+func (c *command) setDefaultValues() {
+	for _, o := range c.Options {
+		if o.DefValue != "" {
+			_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), o.DefValue)
+		}
+		if o.Env != "" {
+			envvalue := os.Getenv(o.Env)
+			if envvalue != "" {
+				_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), envvalue)
+			}
+		}
+	}
+}
+
+func (c command) OutputHelp(w io.Writer) {
+	if len(c.Names) > 0 {
+		name := longestName(c.Names)
+		fmt.Fprintf(w, "command %s - %s\n", name, c.Help)
 	}
 
-	if len(c.subs)+len(c.extras) > 0 {
+	if len(c.Subs)+len(c.Extras) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Sub commands:")
 
-		var subs []*cmd
-		subs = append(subs, c.subs...)
-		subs = append(subs, c.extras...)
+		var subs []*command
+		subs = append(subs, c.Subs...)
+		subs = append(subs, c.Extras...)
 
 		var names []string
 		var helps []string
 		width := 0
 		for _, s := range subs {
-			snames := s.names
+			snames := s.Names
 			sort.Slice(snames, func(i, j int) bool { return len(snames[i]) > len(snames[j]) })
-			n := strings.Join(s.names, ", ")
+			n := strings.Join(s.Names, ", ")
 			names = append(names, n)
-			helps = append(helps, s.help)
+			helps = append(helps, s.Help)
 
 			w := runewidth.StringWidth(n)
 			if width < w {
@@ -79,7 +124,7 @@ func (c cmd) Help(w io.Writer) {
 		}
 	}
 
-	if len(c.opts) > 0 {
+	if len(c.Options) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Options:")
 
@@ -88,9 +133,9 @@ func (c cmd) Help(w io.Writer) {
 		var defdesc []string
 		width := 0
 
-		for _, o := range c.opts {
+		for _, o := range c.Options {
 			var onames []string
-			onames = append(onames, o.names...)
+			onames = append(onames, o.Names...)
 			for i, n := range onames {
 				if len(n) == 1 {
 					onames[i] = "-" + n
@@ -101,12 +146,12 @@ func (c cmd) Help(w io.Writer) {
 
 			sort.Slice(onames, func(i, j int) bool { return len(onames[i]) < len(onames[j]) })
 			n := strings.Join(onames, ", ")
-			if o.placeholder != "" {
-				n += " " + o.placeholder
+			if o.Placeholder != "" {
+				n += " " + o.Placeholder
 			}
 			names = append(names, n)
-			helps = append(helps, o.help)
-			defdesc = append(defdesc, o.defvalue)
+			helps = append(helps, o.Help)
+			defdesc = append(defdesc, o.DefValue)
 
 			w := runewidth.StringWidth(n)
 			if width < w {
@@ -130,15 +175,15 @@ func (c cmd) Help(w io.Writer) {
 
 	curr := &c
 	for {
-		curr = curr.parent
+		curr = curr.Parent
 		if curr == nil {
 			break
 		}
 
-		if len(curr.opts) > 0 {
+		if len(curr.Options) > 0 {
 			currname := "Global"
-			if len(curr.names) > 0 {
-				currname = "Outer " + curr.names[0]
+			if len(curr.Names) > 0 {
+				currname = "Outer " + curr.Names[0]
 			}
 
 			fmt.Fprintln(w)
@@ -149,9 +194,9 @@ func (c cmd) Help(w io.Writer) {
 			var defdesc []string
 			width := 0
 
-			for _, o := range curr.opts {
+			for _, o := range curr.Options {
 				var onames []string
-				onames = append(onames, o.names...)
+				onames = append(onames, o.Names...)
 				for i, n := range onames {
 					if len(n) == 1 {
 						onames[i] = "-" + n
@@ -162,12 +207,12 @@ func (c cmd) Help(w io.Writer) {
 
 				sort.Slice(onames, func(i, j int) bool { return len(onames[i]) < len(onames[j]) })
 				n := strings.Join(onames, ", ")
-				if o.placeholder != "" {
-					n += " " + o.placeholder
+				if o.Placeholder != "" {
+					n += " " + o.Placeholder
 				}
 				names = append(names, n)
-				helps = append(helps, o.help)
-				defdesc = append(defdesc, o.defvalue)
+				helps = append(helps, o.Help)
+				defdesc = append(defdesc, o.DefValue)
 
 				w := runewidth.StringWidth(n)
 				if width < w {
@@ -190,78 +235,18 @@ func (c cmd) Help(w io.Writer) {
 		}
 	}
 
-	if len(c.usage) > 0 {
+	if len(c.Usage) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintf(w, "Usage:\n  %v\n", strings.Replace(strings.TrimSpace(c.usage), "\n", "\n  ", -1))
+		fmt.Fprintf(w, "Usage:\n  %v\n", strings.Replace(strings.TrimSpace(c.Usage), "\n", "\n  ", -1))
 	}
 }
 
-func (c cmd) String() string {
-	opts := []string{}
-	for _, o := range c.opts {
-		opts = append(opts, o.String())
-	}
+type extraCmdInit func(*command)
 
-	subs := []string{}
-	for _, s := range c.extras {
-		subs = append(subs, s.String())
-	}
-	for _, s := range c.subs {
-		subs = append(subs, s.String())
-	}
-
-	return fmt.Sprintf("cmd{names=%v, help=%v opts=%v, subs=%v}", c.names, c.help, opts, subs)
-}
-
-func (c cmd) findOpt(name string) *opt {
-	for _, o := range c.opts {
-		for _, n := range o.names {
-			if n == name {
-				return o
-			}
-		}
-	}
-	return nil
-}
-
-func (c cmd) findSubCmd(name string) (cmd *cmd, extra bool) {
-	for _, s := range c.extras {
-		for _, n := range s.names {
-			if n == name {
-				return s, true
-			}
-		}
-	}
-	for _, s := range c.subs {
-		for _, n := range s.names {
-			if n == name {
-				return s, false
-			}
-		}
-	}
-	return nil, false
-}
-
-func (c *cmd) setMembersReferMe() {
-	for _, o := range c.opts {
-		o.pv = c.v
-	}
-	for _, s := range c.subs {
-		s.pv = c.v
-	}
-}
-
-func (c *cmd) setDefaultValues() {
-	for _, o := range c.opts {
-		if o.defvalue != "" {
-			_ = setOptValue(o.pv.Elem().Field(o.fieldIdx), o.defvalue)
-		}
-		if o.env != "" {
-			envvalue := os.Getenv(o.env)
-			if envvalue != "" {
-				_ = setOptValue(o.pv.Elem().Field(o.fieldIdx), envvalue)
-			}
-		}
+// Usage is an optional argument to AddExtracommand.
+func Usage(usage string) extraCmdInit {
+	return func(c *command) {
+		c.Usage = usage
 	}
 }
 

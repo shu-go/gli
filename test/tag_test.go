@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"bitbucket.org/shu/gli"
 	"bitbucket.org/shu/gotwant"
+	"bitbucket.org/shu_go/gli"
 )
 
 func newApp(ptr interface{}) gli.App {
