@@ -5,21 +5,25 @@ import (
 	"reflect"
 )
 
-type opt struct {
-	names []string
+type option struct {
+	Names []string
+	Kind  reflect.Kind
 
-	env      string
-	defvalue string
+	Env      string
+	DefValue string
 
-	help        string
-	placeholder string
+	Help        string
+	Placeholder string
 
-	//
-
-	pv       reflect.Value
+	OwnerV   reflect.Value
 	fieldIdx int
 }
 
-func (o opt) String() string {
-	return fmt.Sprintf("opt{names=%v help=%v}", o.names, o.help)
+func (o option) String() string {
+	return fmt.Sprintf("option{Names:%v}", o.Names)
+}
+
+func (o *option) SetValue(value interface{}) error {
+	o.OwnerV.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(value))
+	return nil
 }

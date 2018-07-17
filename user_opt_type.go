@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"bitbucket.org/shu/rog"
 )
 
 // Parsable represents an string->YOURTYPE convertible
@@ -121,7 +119,6 @@ func (m *Map) Parse(str string) error {
 		pos = poscl
 	}
 	if pos == -1 {
-		rog.Print(str, pos, poseq, poscl)
 		return errors.New("no separator in Map")
 	}
 

@@ -1,129 +1,85 @@
-package gli
+package gli_test
 
 import (
+	"os"
 	"testing"
 
 	"bitbucket.org/shu/gotwant"
+	"bitbucket.org/shu_go/gli"
 )
 
-func init() {
-	//rog.EnableDebug()
+func TestParseSingle(t *testing.T) {
+	t.Run("Empty", func(t *testing.T) {
+		global := struct{}{}
+		app := gli.New(&global)
+		iglobal, args, err := app.Parse([]string{})
+
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, iglobal.(*struct{}), &global)
+		gotwant.TestExpr(t, args, len(args) == 0)
+	})
+
+	t.Run("SingleNoTags", func(t *testing.T) {
+		global := struct {
+			Name string
+			Age  int
+		}{}
+		app := gli.New(&global)
+		_, args, err := app.Parse([]string{"--name", "hoge", "--age", "123", "a", "b"})
+
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, global.Name, "hoge")
+		gotwant.Test(t, global.Age, 123)
+		gotwant.Test(t, args, []string{"a", "b"})
+	})
+
+	t.Run("SingleTags", func(t *testing.T) {
+		os.Setenv("TEST_AREA", "Hashi no shita")
+		global := struct {
+			Name string `cli:"n"`
+			Age  int    `cli:"a"`
+
+			Country string `default:"Nihon"`
+			Area1   string `env:"TEST_AREA"`
+		}{}
+		app := gli.New(&global)
+		_, args, err := app.Parse([]string{"-n", "hoge", "-a", "123", "a", "b"})
+
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, global.Name, "hoge")
+		gotwant.Test(t, global.Age, 123)
+		gotwant.Test(t, global.Country, "Nihon")
+		gotwant.Test(t, global.Area1, "Hashi no shita")
+		gotwant.Test(t, args, []string{"a", "b"})
+	})
 }
 
-func TestStructure1(t *testing.T) {
-	o := struct {
-		Option1 string
-	}{}
-	app := New(&o)
-	app.Stdout = nil
-	app.Stderr = nil
-	gotwant.Test(t, app.cmd.opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
-
-	oo := struct {
-		Option1 string `cli:"o1,o2"`
-	}{}
-	app = New(&oo)
-	app.Stdout = nil
-	app.Stderr = nil
-	gotwant.Test(t, app.cmd.opts[0].names, []string{"o1", "o2"}, gotwant.Format("%#v"))
-
-	ooo := struct {
-		Option1 string `env:"ENVIRON1" default:"hogehoge"`
-	}{}
-	app = New(&ooo)
-	app.Stdout = nil
-	app.Stderr = nil
-	gotwant.Test(t, app.cmd.opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
-	gotwant.Test(t, app.cmd.opts[0].env, "ENVIRON1", gotwant.Format("%#v"))
-	gotwant.Test(t, app.cmd.opts[0].defvalue, "hogehoge", gotwant.Format("%#v"))
+type BGlobal struct {
+	Sub1 BSub1
+	Sub2 BSub2 `cli:"sub2, s2"`
 }
 
-func TestStructure2(t *testing.T) {
-	o := struct {
-		Sub1 struct {
-			Option1 bool
-		}
-	}{}
-	app := New(&o)
-	app.Stdout = nil
-	app.Stderr = nil
-	gotwant.Test(t, len(app.cmd.opts), 0, gotwant.Format("%#v"))
-	gotwant.Test(t, app.cmd.subs[0].names, []string{"sub1"}, gotwant.Format("%#v"))
-	gotwant.Test(t, len(app.cmd.subs[0].opts), 1, gotwant.Format("%#v"))
-	gotwant.Test(t, app.cmd.subs[0].opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
+type BSub1 struct{}
+type BSub2 struct {
+	Int1 int
+	Int2 int `cli:"int2"`
+	Int3 int `cli:"i,int3"`
+	Int4 int `cli:"j,int4"`
+
+	Str1 string `default:"hoge"`
+	Str2 string `env:"STR2" default:"str2"`
+
+	Bool1 bool
 }
 
-func TestStructure3(t *testing.T) {
-	o := struct {
-		Sub1 *struct {
-			Option1 bool
-		}
-	}{}
-	app := New(&o)
-	app.Stdout = nil
-	app.Stderr = nil
-	gotwant.Test(t, len(app.cmd.opts), 0, gotwant.Format("%#v"))
-	gotwant.Test(t, app.cmd.subs[0].names, []string{"sub1"}, gotwant.Format("%#v"))
-	gotwant.Test(t, len(app.cmd.subs[0].opts), 1, gotwant.Format("%#v"))
-	gotwant.Test(t, app.cmd.subs[0].opts[0].names, []string{"option1"}, gotwant.Format("%#v"))
+func (sub2 BSub2) Run() {
 }
 
-func TestRun1(t *testing.T) {
-	o := struct {
-		Name    string
-		Verbose bool
-	}{}
-	app := New(&o)
-	app.Stdout = nil
-	app.Stderr = nil
-	app.Run([]string{"--name=ichi"})
-	gotwant.Test(t, o.Name, "ichi")
-
-	app.Run([]string{"--name", "ni"})
-	gotwant.Test(t, o.Name, "ni")
-
-	app.Run([]string{"--name=", "san"})
-	gotwant.Test(t, o.Name, "san")
-
-	app.Run([]string{"--name", "shi", "--verbose"})
-	gotwant.Test(t, o.Name, "shi")
-	gotwant.Test(t, o.Verbose, true)
-}
-
-func TestRun2(t *testing.T) {
-	o := struct {
-		Name    string `cli:"n,name"`
-		Verbose bool   `cli:"v,verbose"`
-	}{}
-	inito := o
-
-	app := New(&o)
-	app.Stdout = nil
-	app.Stderr = nil
-	app.Run([]string{"--name=ichi"})
-	gotwant.Test(t, o.Name, "ichi")
-
-	o = inito
-	app.Run([]string{"--name", "ni", "--verbose"})
-	gotwant.Test(t, o.Name, "ni")
-	gotwant.Test(t, o.Verbose, true)
-
-	o = inito
-	app.Run([]string{"-vn", "san"})
-	gotwant.Test(t, o.Name, "san")
-	gotwant.Test(t, o.Verbose, true)
-
-	o = inito
-	app.Run([]string{"-n", "shi"})
-	gotwant.Test(t, o.Name, "shi")
-	gotwant.Test(t, o.Verbose, false)
-
-	o = inito
-	err := app.Run([]string{"-verbose"})
-	gotwant.Test(t, o.Verbose, true)
-	gotwant.TestError(t, err, nil)
-
-	o = inito
-	err = app.Run([]string{"-varbose"})
-	gotwant.TestError(t, err, ErrNotDefined)
+func Benchmark(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		g := BGlobal{}
+		app := gli.New(&g)
+		app.Run([]string{"sub2", "--int2", "2222", "--str2=hogehoge --bool1"})
+	}
 }
