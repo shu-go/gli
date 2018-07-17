@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"bitbucket.org/shu/gotwant"
+	"bitbucket.org/shu_go/gotwant"
 )
 
 type callGlobal struct {

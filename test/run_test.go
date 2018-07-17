@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"bitbucket.org/shu/gotwant"
+	"bitbucket.org/shu_go/gotwant"
 )
 
 var subresult string

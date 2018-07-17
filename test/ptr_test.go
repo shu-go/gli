@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"bitbucket.org/shu/gotwant"
+	"bitbucket.org/shu_go/gotwant"
 )
 
 func TestPtrOpt(t *testing.T) {

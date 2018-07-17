@@ -4,15 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/shu/gotwant"
-	"bitbucket.org/shu/rog"
 	"bitbucket.org/shu_go/gli"
+	"bitbucket.org/shu_go/gotwant"
 )
 
 func TestTypes(t *testing.T) {
 	t.Run("Int", func(t *testing.T) {
-		rog.EnableDebug()
-
 		g := struct {
 			Int  int
 			Uint uint
@@ -22,8 +19,6 @@ func TestTypes(t *testing.T) {
 		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, g.Int, -123)
 		gotwant.Test(t, g.Uint, uint(321), gotwant.Format("%#v"))
-
-		rog.DisableDebug()
 	})
 	t.Run("Float", func(t *testing.T) {
 		g := struct {
