@@ -38,6 +38,11 @@ type App struct {
 	// global help footer
 	Copyright string
 
+	// MyCommandABC => false(default): "mycommandabc" , true: "my-command-abc"
+	HyphenedCommandName bool
+	// MyOptionABC => false(default): "myoptionabc" , true: "my-option-abc"
+	HyphenedOptionName bool
+
 	SuppressErrorOutput bool
 	Stdout, Stderr      *os.File
 
@@ -62,6 +67,9 @@ func New(ptrSt interface{}) App {
 		UsageTag:   "usage",
 		DefaultTag: "default",
 		EnvTag:     "env",
+
+		HyphenedCommandName: false,
+		HyphenedOptionName:  false,
 
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
@@ -133,7 +141,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			}
 		}
 
-		name := ft.Name
+		name := g.arrangeName(ft.Name, iscmd)
 		tag := ft.Tag
 
 		names := []string{}
@@ -422,6 +430,34 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	}
 
 	return cmd.SelfV.Interface(), cmd.Args, nil
+}
+
+func (g *App) arrangeName(name string, iscmd bool) string {
+
+	if iscmd && !g.HyphenedCommandName {
+		return name
+	}
+	if !iscmd && !g.HyphenedOptionName {
+		return name
+	}
+
+	result := make([]rune, 0, len(name))
+
+	prevU := false
+	for i, c := range name {
+		if i != 0 && 'A' <= c && c <= 'Z' {
+			if !prevU {
+				result = append(result, '-')
+			}
+			prevU = true
+		} else {
+			prevU = false
+		}
+
+		result = append(result, c)
+	}
+
+	return string(result)
 }
 
 func isStructImplements(st reflect.Type, iface reflect.Type) bool {
