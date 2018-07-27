@@ -20,6 +20,15 @@ type singles struct {
 	A, B, C bool
 }
 
+type hyphendGlobal struct {
+	SubCommand hyphenedSub
+	OptionA    string
+}
+
+type hyphenedSub struct {
+	OptionABC string
+}
+
 func (q *quoted) Run(args []string) {
 	if q.Opt != "" {
 		q.result = append(q.result, "Opt:"+q.Opt)
@@ -32,7 +41,6 @@ func (q *quoted) Run(args []string) {
 
 func TestQuoted(t *testing.T) {
 	t.Run("ParseArg", func(t *testing.T) {
-
 		c := quotedGlobal{}
 		app := gli.New(&c)
 		_, args, err := app.Parse([]string{"quoted", "a", "b", "c", "d"})
@@ -48,6 +56,19 @@ func TestQuoted(t *testing.T) {
 		app = gli.New(&c)
 		_, args, _ = app.Parse([]string{"quoted", "abc", "def ghi", "jkl"})
 		gotwant.Test(t, args, []string{"abc", `def ghi`, "jkl"})
+	})
+
+	t.Run("ParseArgHyphened", func(t *testing.T) {
+		c := hyphendGlobal{}
+		app := gli.New(&c)
+		app.SuppressErrorOutput = true
+		app.HyphenedCommandName = true
+		app.HyphenedOptionName = true
+		app.Rescan(&c)
+		_, _, err := app.Parse([]string{"--option-a", "OPTION_A", "sub-command", "--option-abc", "OPTION_ABC"})
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, c.OptionA, "OPTION_A")
+		gotwant.Test(t, c.SubCommand.OptionABC, "OPTION_ABC")
 	})
 
 	t.Run("RunArg", func(t *testing.T) {
