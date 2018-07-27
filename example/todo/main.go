@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/shu/clise"
+	"bitbucket.org/shu_go/clise"
 	"bitbucket.org/shu_go/gli"
 )
 
