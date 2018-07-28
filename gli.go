@@ -1,14 +1,14 @@
 // Package gli is a CLI parsing and mapping library.
 //
-// type globalCmd struct {
-//     Name string
-//     Age  int
-// }
-// func (g *globalCmd) Run() error {
-//     // :
-// }
-// app := gli.New(&globalCmd{})
-// err := app.Run(os.Args)
+//     type globalCmd struct {
+//         Name string
+//         Age  int
+//     }
+//     func (g *globalCmd) Run() error {
+//         // :
+//     }
+//     app := gli.New(&globalCmd{})
+//     err := app.Run(os.Args)
 package gli
 
 import (
@@ -29,13 +29,36 @@ var (
 	ErrOptCanNotBeSet = fmt.Errorf("option can not be set")
 )
 
+// App contains parsing and parsed data.
 type App struct {
 	// tag keys
-	CliTag, HelpTag, UsageTag, DefaultTag, EnvTag string
+
+	// CliTag is a tag key. default: `cli`
+	CliTag string
+	// HelpTag is a tag key. default: `help`
+	HelpTag string
+	// UsageTag is a tag key. default: `usage`
+	UsageTag string
+	// DefaultTag is a tag key. default: `default`
+	DefaultTag string
+	// EnvTag is a tag key. default: `env`
+	EnvTag string
 
 	// global help header
-	Name, Desc, Usage, Version string
+
+	// Name is the app name. default: the name of the executable file
+	Name string
+	// Desc is a description of the app
+	// {{Name}} - {{Desc}}
+	Desc string
+	// Usage is a long(multiline) usage text
+	Usage string
+	// Version numbers
+	Version string
+
 	// global help footer
+
+	// Copyright the app auther has
 	Copyright string
 
 	// MyCommandABC => false(default): "mycommandabc" , true: "my-command-abc"
@@ -43,6 +66,7 @@ type App struct {
 	// MyOptionABC => false(default): "myoptionabc" , true: "my-option-abc"
 	HyphenedOptionName bool
 
+	// SuppressErrorOutput is an option to suppresses on cli parsing error.
 	SuppressErrorOutput bool
 	Stdout, Stderr      *os.File
 
