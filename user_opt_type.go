@@ -15,6 +15,9 @@ type Parsable interface {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Duration is a parsable type of time duration.
+//
+// see https://golang.org/pkg/time/#ParseDuration
 type Duration time.Duration
 
 func (d *Duration) Parse(str string) error {
@@ -34,6 +37,7 @@ func (d Duration) Duration() time.Duration {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Range is a parsable type of min:max.
 type Range struct {
 	Min, Max string
 }
@@ -53,6 +57,7 @@ func (r *Range) Parse(str string) error {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// StrList is a parsable type of ["s", "t", "r"]
 type StrList []string
 
 func (l *StrList) Parse(str string) error {
@@ -75,6 +80,7 @@ func (l StrList) Contains(s string) bool {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// IntList is a parsable type of [1, 2, 3]
 type IntList []int
 
 func (l *IntList) Parse(str string) error {
@@ -102,6 +108,7 @@ func (l IntList) Contains(i int) bool {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Map is a parsable type of key=value or key:value pair.
 type Map map[string]string
 
 func (m *Map) Parse(str string) error {
