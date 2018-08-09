@@ -24,8 +24,11 @@ import (
 )
 
 var (
+	// ErrNotDefined means "an option or a subcommand is not defined in the passed struct".
 	ErrNotDefined     = fmt.Errorf("not defined")
+	// ErrNotRunnable means "Run method is not defined for the passed struct".
 	ErrNotRunnable    = fmt.Errorf("command not runnable")
+	// ErrOptCanNotBeSet is a reflect related error.
 	ErrOptCanNotBeSet = fmt.Errorf("option can not be set")
 )
 
@@ -275,11 +278,16 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 	g.root.Extras = append(g.root.Extras, &cmd)
 }
 
-func (g *App) Parse(args []string) (tgt interface{}, tgtargs []string, appRunErr error) {
+// Parse parses args and returns results.
+// tgt (interface{}) : a resultant struct
+// tgtargs ([]string) : args of last subcommand
+// err : parsing error
+func (g *App) Parse(args []string) (tgt interface{}, tgtargs []string, err error) {
 	return g.exec(args, false)
 }
 
-func (g *App) Run(args []string) (appRunErr error) {
+// Run parses args and calls Run method of a subcommand.
+func (g *App) Run(args []string) error {
 	_, _, err := g.exec(args, true)
 	return err
 }
