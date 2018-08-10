@@ -34,37 +34,35 @@ func (q *quoted) Run(args []string) {
 		q.result = append(q.result, "Opt:"+q.Opt)
 	}
 
-	for _, v := range args {
-		q.result = append(q.result, v)
-	}
+	q.result = append(q.result, args...)
 }
 
 func TestQuoted(t *testing.T) {
 	t.Run("ParseArg", func(t *testing.T) {
 		c := quotedGlobal{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		_, args, err := app.Parse([]string{"quoted", "a", "b", "c", "d"})
 		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, args, []string{"a", "b", "c", "d"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		_, args, _ = app.Parse([]string{"quoted", "a", "b", "c d"})
 		gotwant.Test(t, args, []string{"a", "b", "c d"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		_, args, _ = app.Parse([]string{"quoted", "abc", "def ghi", "jkl"})
 		gotwant.Test(t, args, []string{"abc", `def ghi`, "jkl"})
 	})
 
 	t.Run("ParseArgHyphened", func(t *testing.T) {
 		c := hyphendGlobal{}
-		app := gli.New(&c)
+		app := gli.New()
 		app.SuppressErrorOutput = true
 		app.HyphenedCommandName = true
 		app.HyphenedOptionName = true
-		app.Rescan(&c)
+		app.Bind(&c)
 		_, _, err := app.Parse([]string{"--option-a", "OPTION_A", "sub-command", "--option-abc", "OPTION_ABC"})
 		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, c.OptionA, "OPTION_A")
@@ -73,75 +71,75 @@ func TestQuoted(t *testing.T) {
 
 	t.Run("RunArg", func(t *testing.T) {
 		c := quotedGlobal{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"quoted", "a", "b", "c", "d"})
 		gotwant.Test(t, c.Quoted.result, []string{"a", "b", "c", "d"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Run([]string{"quoted", "a", "b", "c d"})
 		gotwant.Test(t, c.Quoted.result, []string{"a", "b", "c d"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Run([]string{"quoted", "abc", "def ghi", "jkl"})
 		gotwant.Test(t, c.Quoted.result, []string{"abc", `def ghi`, "jkl"})
 	})
 
 	t.Run("ParseOpt", func(t *testing.T) {
 		c := quotedGlobal{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Parse([]string{"quoted", "--opt", "abc"})
 		gotwant.Test(t, c.Quoted.Opt, "abc")
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Parse([]string{"quoted", "--opt", "def", "ghi"})
 		gotwant.Test(t, c.Quoted.Opt, "def")
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Parse([]string{"quoted", "--opt", "def ghi"})
 		gotwant.Test(t, c.Quoted.Opt, "def ghi")
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Parse([]string{"quoted", "--opt=def ghi"})
 		gotwant.Test(t, c.Quoted.Opt, "def ghi")
 	})
 
 	t.Run("RunOpt", func(t *testing.T) {
 		c := quotedGlobal{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"quoted", "--opt", "abc"})
 		gotwant.Test(t, c.Quoted.result, []string{"Opt:abc"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Run([]string{"quoted", "--opt", "def", "ghi"})
 		gotwant.Test(t, c.Quoted.result, []string{"Opt:def", "ghi"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Run([]string{"quoted", "--opt", "def ghi"})
 		gotwant.Test(t, c.Quoted.result, []string{"Opt:def ghi"})
 
 		c = quotedGlobal{}
-		app = gli.New(&c)
+		app = newApp(&c)
 		app.Run([]string{"quoted", "--opt=def ghi"})
 		gotwant.Test(t, c.Quoted.result, []string{"Opt:def ghi"})
 	})
 
 	t.Run("RunBoth", func(t *testing.T) {
 		c := quotedGlobal{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"quoted", "--opt", "def ghi", "j k  l"})
 		gotwant.Test(t, c.Quoted.result, []string{"Opt:def ghi", "j k  l"})
 	})
 
 	t.Run("Singles", func(t *testing.T) {
 		c := singles{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"-a", "-b", "-c"})
 		gotwant.Test(t, c.A, true)
 		gotwant.Test(t, c.B, true)
@@ -150,7 +148,7 @@ func TestQuoted(t *testing.T) {
 
 	t.Run("SinglesConcat", func(t *testing.T) {
 		c := singles{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"-ac"})
 		gotwant.Test(t, c.A, true)
 		gotwant.Test(t, c.B, false)
@@ -159,7 +157,7 @@ func TestQuoted(t *testing.T) {
 
 	t.Run("SinglesConcat+", func(t *testing.T) {
 		c := singles{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"-ac", "-b"})
 		gotwant.Test(t, c.A, true)
 		gotwant.Test(t, c.B, true)
@@ -173,8 +171,9 @@ func TestHyphen(t *testing.T) {
 			A int
 			B int
 		}{}
-		app := gli.New(&c)
-		app.Run([]string{"-a=-1", "-b", "-2"})
+		app := newApp(&c)
+		_, _, err := app.Parse([]string{"-a=-1", "-b", "-2"})
+		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, c.A, -1)
 		gotwant.Test(t, c.B, -2)
 	})
@@ -185,7 +184,7 @@ func TestHyphen(t *testing.T) {
 			B string
 			C int
 		}{}
-		app := gli.New(&c)
+		app := newApp(&c)
 		app.Run([]string{"-a=--1", "-b", "--2", "-c", "-3"})
 		gotwant.Test(t, c.A, "--1")
 		gotwant.Test(t, c.B, "--2")

@@ -186,13 +186,13 @@ func (done doneCmd) Run(global *globalCmd, args []string) error {
 }
 
 func main() {
-	app := gli.New(&globalCmd{})
+	app := gli.NewWith(&globalCmd{})
 	app.Name = "todo"
 	app.Desc = "gli example app"
 	app.Version = "beta"
 	app.Copyright = "(C) 2017 Shuhei Kubota"
 
-	//app.AddExtraCommand(&helloCmd{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
+	app.AddExtraCommand(&helloCmd{}, "hello", "say hello", gli.Usage("todo hello\nthis will greet you"))
 
 	err := app.Run(os.Args)
 	if err != nil {

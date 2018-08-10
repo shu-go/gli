@@ -9,9 +9,22 @@ import (
 )
 
 func TestParseSingle(t *testing.T) {
+	t.Run("NotScanned", func(t *testing.T) {
+		app := gli.New()
+		gotwant.TestPanic(t, func() {
+			app.Run([]string{})
+		}, "")
+		gotwant.TestPanic(t, func() {
+			app.Parse([]string{})
+		}, "")
+		gotwant.TestPanic(t, func() {
+			app.AddExtraCommand(nil, "", "")
+		}, "")
+	})
+
 	t.Run("Empty", func(t *testing.T) {
 		global := struct{}{}
-		app := gli.New(&global)
+		app := gli.NewWith(&global)
 		iglobal, args, err := app.Parse([]string{})
 
 		gotwant.TestError(t, err, nil)
@@ -24,7 +37,7 @@ func TestParseSingle(t *testing.T) {
 			Name string
 			Age  int
 		}{}
-		app := gli.New(&global)
+		app := gli.NewWith(&global)
 		_, args, err := app.Parse([]string{"--name", "hoge", "--age", "123", "a", "b"})
 
 		gotwant.TestError(t, err, nil)
@@ -42,7 +55,7 @@ func TestParseSingle(t *testing.T) {
 			Country string `default:"Nihon"`
 			Area1   string `env:"TEST_AREA"`
 		}{}
-		app := gli.New(&global)
+		app := gli.NewWith(&global)
 		_, args, err := app.Parse([]string{"-n", "hoge", "-a", "123", "a", "b"})
 
 		gotwant.TestError(t, err, nil)
@@ -79,7 +92,7 @@ func Benchmark(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		g := BGlobal{}
-		app := gli.New(&g)
+		app := gli.NewWith(&g)
 		app.Run([]string{"sub2", "--int2", "2222", "--str2=hogehoge --bool1"})
 	}
 }
