@@ -9,7 +9,7 @@ import (
 )
 
 func newApp(ptr interface{}) gli.App {
-	app := gli.New(ptr)
+	app := gli.NewWith(ptr)
 	app.SuppressErrorOutput = true
 	app.Stdout = nil
 	app.Stderr = nil
@@ -129,7 +129,7 @@ func TestTagName(t *testing.T) {
 	app.UsageTag = "ccc"
 	app.DefaultTag = "ddd"
 	app.EnvTag = "eee"
-	err := app.Rescan(&g)
+	err := app.Bind(&g)
 	gotwant.TestError(t, err, nil)
 
 	//app.Help(os.Stdout)

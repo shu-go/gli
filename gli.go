@@ -7,7 +7,7 @@
 //     func (g *globalCmd) Run() error {
 //         // :
 //     }
-//     app := gli.New(&globalCmd{})
+//     app := gli.NewWith(&globalCmd{})
 //     err := app.Run(os.Args)
 package gli
 
@@ -25,28 +25,15 @@ import (
 
 var (
 	// ErrNotDefined means "an option or a subcommand is not defined in the passed struct".
-	ErrNotDefined     = fmt.Errorf("not defined")
+	ErrNotDefined = fmt.Errorf("not defined")
 	// ErrNotRunnable means "Run method is not defined for the passed struct".
-	ErrNotRunnable    = fmt.Errorf("command not runnable")
+	ErrNotRunnable = fmt.Errorf("command not runnable")
 	// ErrOptCanNotBeSet is a reflect related error.
 	ErrOptCanNotBeSet = fmt.Errorf("option can not be set")
 )
 
 // App contains parsing and parsed data.
 type App struct {
-	// tag keys
-
-	// CliTag is a tag key. default: `cli`
-	CliTag string
-	// HelpTag is a tag key. default: `help`
-	HelpTag string
-	// UsageTag is a tag key. default: `usage`
-	UsageTag string
-	// DefaultTag is a tag key. default: `default`
-	DefaultTag string
-	// EnvTag is a tag key. default: `env`
-	EnvTag string
-
 	// global help header
 
 	// Name is the app name. default: the name of the executable file
@@ -64,6 +51,19 @@ type App struct {
 	// Copyright the app auther has
 	Copyright string
 
+	// tag keys
+
+	// CliTag is a tag key. default: `cli`
+	CliTag string
+	// HelpTag is a tag key. default: `help`
+	HelpTag string
+	// UsageTag is a tag key. default: `usage`
+	UsageTag string
+	// DefaultTag is a tag key. default: `default`
+	DefaultTag string
+	// EnvTag is a tag key. default: `env`
+	EnvTag string
+
 	// MyCommandABC => false(default): "mycommandabc" , true: "my-command-abc"
 	HyphenedCommandName bool
 	// MyOptionABC => false(default): "myoptionabc" , true: "my-option-abc"
@@ -77,17 +77,9 @@ type App struct {
 	root   *command
 }
 
-func New(ptrSt interface{}) App {
-	v := reflect.ValueOf(ptrSt)
-	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
-		panic("not a pointer to a struct")
-	}
-
+func New() App {
 	app := App{
 		parser: cliparser.New(),
-		root: &command{
-			SelfV: v,
-		},
 
 		CliTag:     "cli",
 		HelpTag:    "help",
@@ -97,13 +89,8 @@ func New(ptrSt interface{}) App {
 
 		HyphenedCommandName: false,
 		HyphenedOptionName:  false,
-
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-	}
-
-	if err := app.scanMeta(v.Type(), app.root); err != nil {
-		panic(err.Error())
+		Stdout:              os.Stdout,
+		Stderr:              os.Stderr,
 	}
 
 	//HINT
@@ -119,7 +106,20 @@ func New(ptrSt interface{}) App {
 	return app
 }
 
-func (g *App) Rescan(ptrSt interface{}) error {
+// NewWith is  New().Bind(ptrSt)
+func NewWith(ptrSt interface{}) App {
+	app := New()
+
+	if err := app.Bind(ptrSt); err != nil {
+		panic(err)
+	}
+
+	return app
+}
+
+// Bind updates option/command names with ptrSt.
+// Extra commands are cleared.
+func (g *App) Bind(ptrSt interface{}) error {
 	v := reflect.ValueOf(ptrSt)
 	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
 		panic("not a pointer to a struct")
@@ -246,6 +246,10 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 // AddExtraCommand adds a sub command.
 func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...extraCmdInit) {
+	if g.root == nil {
+		panic("need Bind or use NewWith")
+	}
+
 	v := reflect.ValueOf(ptrSt)
 	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
 		panic("not a pointer to a struct")
@@ -283,11 +287,19 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 // tgtargs ([]string) : args of last subcommand
 // err : parsing error
 func (g *App) Parse(args []string) (tgt interface{}, tgtargs []string, err error) {
+	if g.root == nil {
+		panic("need Bind or use NewWith")
+	}
+
 	return g.exec(args, false)
 }
 
 // Run parses args and calls Run method of a subcommand.
 func (g *App) Run(args []string) error {
+	if g.root == nil {
+		panic("need Bind or use NewWith")
+	}
+
 	_, _, err := g.exec(args, true)
 	return err
 }
@@ -636,6 +648,10 @@ func setOptValue(opt reflect.Value, value string) error {
 
 // Help displays help messages.
 func (g App) Help(w io.Writer) {
+	if g.root == nil {
+		panic("need Bind or use NewWith")
+	}
+
 	appinfo := g.Name
 	if g.Desc != "" {
 		appinfo += " - " + g.Desc
