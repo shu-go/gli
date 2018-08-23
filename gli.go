@@ -180,6 +180,10 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 		// names
 		if tv, ok := tag.Lookup(g.CliTag); ok {
+			if tv == "-" || tv == "" {
+				continue
+			}
+
 			clinames := strings.Split(tv, ",")
 			for _, n := range clinames {
 				n = strings.TrimSpace(n)
