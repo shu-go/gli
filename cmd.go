@@ -34,6 +34,40 @@ func (c command) String() string {
 	return fmt.Sprintf("command{Names:%v, Opts:%v, Subs:%v, Extras:%v, Args:%v}", c.Names, c.Options, c.Subs, c.Extras, c.Args)
 }
 
+func (c command) LongestName() string {
+	var maxlen int = -1
+	var maxname string
+	for _, n := range c.Names {
+		nlen := len(n)
+		if nlen > maxlen {
+			maxlen = nlen
+			maxname = n
+		}
+	}
+
+	return maxname
+}
+
+func (c command) LongestNameStack() []string {
+	var s []string
+
+	for cmd := &c; cmd != nil; cmd = cmd.Parent {
+		n := cmd.LongestName()
+		if n == "" {
+			break
+		}
+		s = append(s, n)
+	}
+
+	// reverse
+	for i := 0; i < len(s)/2; i++ {
+		//swap
+		s[i], s[len(s)-i-1] = s[len(s)-i-1], s[i]
+	}
+
+	return s
+}
+
 func (c *command) FindOptionExact(name string) *option {
 	for _, o := range c.Options {
 		for _, n := range o.Names {

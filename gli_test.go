@@ -87,12 +87,3 @@ type BSub2 struct {
 
 func (sub2 BSub2) Run() {
 }
-
-func Benchmark(b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		g := BGlobal{}
-		app := gli.NewWith(&g)
-		app.Run([]string{"sub2", "--int2", "2222", "--str2=hogehoge --bool1"})
-	}
-}

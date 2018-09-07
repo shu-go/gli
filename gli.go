@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -215,8 +216,12 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			cmd.Subs = append(cmd.Subs, sub)
 
 			//HINT
+			lname := sub.LongestName()
 			for _, n := range names {
-				g.parser.HintCommand(n)
+				g.parser.HintCommand(n, cmd.LongestNameStack())
+				g.parser.HintCommand(n, append(cmd.LongestNameStack(), "help"))
+				//rog.Debug("HintAlias", n, lname)
+				g.parser.HintAlias(n, lname)
 			}
 
 			err := g.scanMeta(ft.Type, sub)
@@ -224,23 +229,27 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				return err
 			}
 		} else {
-			cmd.Options = append(cmd.Options, &option{
+			opt := &option{
 				Names:       names,
 				Env:         env,
 				DefValue:    defvalue,
 				Help:        help,
 				Placeholder: placeholder,
 				fieldIdx:    i,
-			})
+			}
+			cmd.Options = append(cmd.Options, opt)
 
 			//HINT
+			lname := opt.LongestName()
 			for _, n := range names {
 				if len(n) > 1 {
-					g.parser.HintLongName(n)
+					g.parser.HintLongName(n, cmd.LongestNameStack())
 				}
 				if !isbool {
-					g.parser.HintWithArg(n)
+					g.parser.HintWithArg(n, cmd.LongestNameStack())
 				}
+				//rog.Debug("HintAlias", n, lname)
+				g.parser.HintAlias(n, lname)
 			}
 		}
 	}
@@ -266,6 +275,7 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 	for i, n := range nameslice {
 		nameslice[i] = strings.TrimSpace(n)
 		g.parser.HintCommand(nameslice[i])
+		g.parser.HintCommand(n, []string{"help"})
 	}
 	cmd := command{
 		Names:  nameslice,
@@ -327,6 +337,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	helpMode := false
 
+	g.parser.Reset()
 	g.parser.Feed(args)
 	if err := g.parser.Parse(); err != nil {
 		return nil, nil, err
@@ -334,6 +345,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	for {
 		c := g.parser.GetComponent()
+		//rog.Debug("c", c)
 		if c == nil {
 			break
 		}
@@ -353,19 +365,40 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			cmd.Args = append(cmd.Args, c.Arg)
 
 		case cliparser.Option:
+			//rog.Debug(c.Name)
 			o := cmd.FindOptionExact(c.Name)
 			if o == nil {
 				if !g.SuppressErrorOutput {
-					fmt.Fprintf(g.Stdout, "option %s %v\n\n", c.Name, ErrNotDefined)
+					//rog.Debug("notdefined")
+					fmt.Fprintf(g.Stdout, "option %q %v\n\n", c.Name, ErrNotDefined)
+
+					var candidates []string
+					for _, opt := range cmd.Options {
+						for _, name := range opt.Names {
+							if strings.HasPrefix(name, c.Name) {
+								candidates = append(candidates, name)
+								break
+							} else if re, err := regexp.Compile("[" + name + "]"); err == nil {
+								if len(re.ReplaceAllLiteralString(c.Name, "")) <= len(c.Name)/10 {
+									candidates = append(candidates, name)
+									break
+								}
+							}
+						}
+					}
+					if len(candidates) > 0 {
+						fmt.Fprintf(g.Stdout, "    maybe %v ?\n\n", candidates)
+					}
 					g.Help(g.Stdout)
 				}
+				//rog.Debug("notdefined")
 				return nil, nil, ErrNotDefined
 			}
 
 			err := setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), c.Arg)
 			if err != nil {
 				if !g.SuppressErrorOutput {
-					fmt.Fprintf(g.Stderr, "option %s: %v\n\n", c.Name, err)
+					fmt.Fprintf(g.Stderr, "option %q: %v\n\n", c.Name, err)
 					g.Help(g.Stdout)
 				}
 				return nil, nil, err
@@ -380,9 +413,11 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			sub, isextra := cmd.FindCommandExact(c.Name)
 			if sub == nil {
 				if !g.SuppressErrorOutput {
-					fmt.Fprintf(g.Stderr, "command %s %v\n\n", c.Name, ErrNotDefined)
+					//rog.Debug("notdefined")
+					fmt.Fprintf(g.Stderr, "command %q %v\n\n", c.Name, ErrNotDefined)
 					g.Help(g.Stdout)
 				}
+				//rog.Debug("notdefined")
 				return nil, nil, ErrNotDefined
 			}
 

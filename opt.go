@@ -19,6 +19,20 @@ type option struct {
 	fieldIdx int
 }
 
+func (o option) LongestName() string {
+	var maxlen int = -1
+	var maxname string
+	for _, n := range o.Names {
+		nlen := len(n)
+		if nlen > maxlen {
+			maxlen = nlen
+			maxname = n
+		}
+	}
+
+	return maxname
+}
+
 func (o option) String() string {
 	return fmt.Sprintf("option{Names:%v}", o.Names)
 }
