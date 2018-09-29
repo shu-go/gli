@@ -186,7 +186,12 @@ func (done doneCmd) Run(global *globalCmd, args []string) error {
 }
 
 func main() {
-	app := gli.NewWith(&globalCmd{})
+	//app := gli.NewWith(&globalCmd{})
+
+	app := gli.New()
+	app.OptionsGrouped = false
+
+	app.Bind(&globalCmd{})
 	app.Name = "todo"
 	app.Desc = "gli example app"
 	app.Version = "beta"
@@ -207,6 +212,8 @@ type helloCmd struct {
 }
 
 type helloGoodbyeCmd struct {
+	A, B, C bool
+	ABC     bool
 }
 
 func (hello helloCmd) Run() {
@@ -220,4 +227,16 @@ func (hello helloCmd) Run() {
 
 func (goodbye helloGoodbyeCmd) Run() {
 	fmt.Println("good bye!")
+	if goodbye.A {
+		fmt.Println("A")
+	}
+	if goodbye.B {
+		fmt.Println("B")
+	}
+	if goodbye.C {
+		fmt.Println("C")
+	}
+	if goodbye.ABC {
+		fmt.Println("ABC")
+	}
 }
