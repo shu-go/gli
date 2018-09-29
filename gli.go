@@ -226,7 +226,14 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			//HINT
 			lname := sub.LongestName()
 			for _, n := range names {
+				// a.out cmd1 cmd2
+				// cmd2 [cmd1]
 				g.parser.HintCommand(n, cmd.LongestNameStack())
+				// a.out cmd1 help
+				// help [cmd1]
+				g.parser.HintCommand("help", cmd.LongestNameStack())
+				// a.out cmd1 help cmd2
+				// cmd2 [cmd1 help]
 				g.parser.HintCommand(n, append(cmd.LongestNameStack(), "help"))
 				//rog.Debug("HintAlias", n, lname)
 				g.parser.HintAlias(n, lname)
@@ -256,7 +263,6 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				if !isbool {
 					g.parser.HintWithArg(n, cmd.LongestNameStack())
 				}
-				//rog.Debug("HintAlias", n, lname)
 				g.parser.HintAlias(n, lname)
 			}
 		}
