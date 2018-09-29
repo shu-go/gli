@@ -69,6 +69,8 @@ type App struct {
 	HyphenedCommandName bool
 	// MyOptionABC => false(default): "myoptionabc" , true: "my-option-abc"
 	HyphenedOptionName bool
+	// OptionsGrouped(default: true) allows -abc may be treated as -a -b -c.
+	OptionsGrouped bool
 
 	// SuppressErrorOutput is an option to suppresses on cli parsing error.
 	SuppressErrorOutput bool
@@ -90,6 +92,7 @@ func New() App {
 
 		HyphenedCommandName: false,
 		HyphenedOptionName:  false,
+		OptionsGrouped:      true,
 		Stdout:              os.Stdout,
 		Stderr:              os.Stderr,
 	}
@@ -124,6 +127,11 @@ func (g *App) Bind(ptrSt interface{}) error {
 	v := reflect.ValueOf(ptrSt)
 	if v.Kind() != reflect.Ptr && v.Elem().Kind() != reflect.Struct {
 		panic("not a pointer to a struct")
+	}
+
+	// hmmmm....
+	if !g.OptionsGrouped {
+		g.parser.HintNoOptionsGrouped()
 	}
 
 	g.root = &command{SelfV: v}
