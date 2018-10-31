@@ -297,6 +297,10 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 		SelfV:  v,
 		Parent: g.root,
 	}
+	lname := cmd.LongestName()
+	for _, n := range cmd.Names {
+		g.parser.HintAlias(n, lname)
+	}
 
 	for _, init := range inits {
 		init(&cmd)
