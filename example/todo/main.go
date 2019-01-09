@@ -32,7 +32,8 @@ type listCmd struct {
 type addCmd struct{}
 
 type delCmd struct {
-	Num *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
+	Num  *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
+	Done bool         `cli:"done" help:"delete done items"`
 }
 
 type doneCmd struct {
@@ -122,7 +123,7 @@ func (add addCmd) Run(global *globalCmd, args []string) error {
 }
 
 func (del delCmd) Run(global *globalCmd, args []string) error {
-	if del.Num == nil && len(args) == 0 {
+	if del.Num == nil && len(args) == 0 && !del.Done {
 		fmt.Println("no conditions")
 		return nil
 	}
@@ -132,19 +133,44 @@ func (del delCmd) Run(global *globalCmd, args []string) error {
 		return err
 	}
 
-	clise.Filter(&list, func(i int) bool {
-		t := (list)[i]
-		if del.Num != nil && del.Num.Contains(t.Num) {
-			verbose("delete %s\n", t)
-			return false
-		}
-		for _, a := range args {
-			if strings.Contains(t.Content, a) {
-				verbose("delete %s\n", t)
-				return false
+	delset := make(map[int]struct{})
+	for i, t := range list {
+		numsexists := false
+		argsexists := false
+		done := false
+
+		if del.Num == nil {
+			numsexists = true
+		} else {
+			if del.Num != nil && del.Num.Contains(t.Num) {
+				numsexists = true
 			}
 		}
-		return true
+
+		if len(args) == 0 {
+			argsexists = true
+		} else {
+			for _, a := range args {
+				if strings.Contains(t.Content, a) {
+					argsexists = true
+				}
+			}
+		}
+
+		if !del.Done {
+			done = true
+		} else {
+			done = t.Done
+		}
+
+		if numsexists && argsexists && done {
+			delset[i] = struct{}{}
+		}
+	}
+
+	clise.Filter(&list, func(i int) bool {
+		_, found := delset[i]
+		return !found
 	})
 
 	return list.Save(global.File)
