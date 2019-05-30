@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/shu_go/clise"
 	"bitbucket.org/shu_go/gli"
+	"bitbucket.org/shu_go/rog"
 )
 
 var (
@@ -212,6 +213,7 @@ func (done doneCmd) Run(global *globalCmd, args []string) error {
 }
 
 func main() {
+	rog.EnableDebug()
 	//app := gli.NewWith(&globalCmd{})
 
 	app := gli.New()
