@@ -15,6 +15,31 @@ type Parsable interface {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Date is a parsable type of date.
+//
+// see https://golang.org/pkg/time/#ParseDuration
+type Date time.Time
+
+func (d *Date) Parse(str string) error {
+	tm, err := time.Parse("2006-01-02", str)
+	if err != nil {
+		tm, err = time.Parse("2006/01/02", str)
+		if err != nil {
+			return err
+		}
+	}
+
+	*d = Date(tm)
+
+	return nil
+}
+
+func (d Date) Time() time.Time {
+	return time.Time(d)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // Duration is a parsable type of time duration.
 //
 // see https://golang.org/pkg/time/#ParseDuration
