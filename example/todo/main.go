@@ -30,7 +30,9 @@ type listCmd struct {
 	Undone bool `cli:"undone,un,u" help:"display only undone items"`
 }
 
-type addCmd struct{}
+type addCmd struct {
+	DueTo *gli.Date `cli:"due,d=DATE" help:"set due date in form of yyyy-mm-dd"`
+}
 
 type delCmd struct {
 	Num  *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
@@ -116,6 +118,10 @@ func (add addCmd) Run(global *globalCmd, args []string) error {
 			Num:       -1,
 			Content:   c,
 			CreatedAt: time.Now(),
+		}
+		if add.DueTo != nil {
+			dueto := add.DueTo.Time()
+			t.DueTo = &dueto
 		}
 		list = append(list, t)
 	}

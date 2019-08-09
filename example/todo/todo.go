@@ -14,6 +14,7 @@ type todo struct {
 	Content   string
 	Done      bool
 	CreatedAt time.Time
+	DueTo     *time.Time
 }
 
 func (t todo) String() string {
@@ -21,7 +22,13 @@ func (t todo) String() string {
 	if t.Done {
 		done = "[*]"
 	}
-	return fmt.Sprintf("%d: %s %s", t.Num, done, t.Content)
+
+	dueto := ""
+	if t.DueTo != nil {
+		dueto = " " + t.DueTo.Format("2006-01-02")
+	}
+
+	return fmt.Sprintf("%[1]d: %[2]s%[3]s %[4]s", t.Num, done, dueto, t.Content)
 }
 
 type todoList []todo
