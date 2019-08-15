@@ -145,24 +145,16 @@ func (m *Map) Parse(str string) error {
 
 	for _, s := range strings.Split(str, ",") {
 		s = strings.TrimSpace(s)
-		poseq := strings.Index(s, "=")
-		poscl := strings.Index(s, ":")
-	pos := -1
-	if poseq != -1 {
-		pos = poseq
-	}
-	if poscl != -1 && (poscl < pos || pos == -1) {
-		pos = poscl
-	}
-	if pos == -1 {
-		return errors.New("no separator in Map")
-	}
+		pos := strings.Index(s, ":")
+		if pos == -1 {
+			return errors.New("no separator in Map")
+		}
 
 		key, value := s[:pos], s[pos+1:]
 		if value == "" {
 			delete(*m, key)
 		} else {
-	(*m)[key] = value
+			(*m)[key] = value
 		}
 	}
 
