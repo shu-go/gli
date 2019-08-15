@@ -114,11 +114,11 @@ func (l *IntList) Parse(str string) error {
 	list := strings.Split(str, ",")
 	for i := 0; i < len(list); i++ {
 		s := strings.TrimSpace(list[i])
-		i, err := strconv.ParseInt(s, 10, 0)
+		n, err := strconv.ParseInt(s, 10, 0)
 		if err != nil {
 			return err
 		}
-		*l = append(*l, int(i))
+		*l = append(*l, int(n))
 	}
 
 	return nil
@@ -143,8 +143,10 @@ func (m *Map) Parse(str string) error {
 		*m = make(map[string]string)
 	}
 
-	poseq := strings.Index(str, "=")
-	poscl := strings.Index(str, ":")
+	for _, s := range strings.Split(str, ",") {
+		s = strings.TrimSpace(s)
+		poseq := strings.Index(s, "=")
+		poscl := strings.Index(s, ":")
 	pos := -1
 	if poseq != -1 {
 		pos = poseq
@@ -156,8 +158,13 @@ func (m *Map) Parse(str string) error {
 		return errors.New("no separator in Map")
 	}
 
-	key, value := str[:pos], str[pos+1:]
+		key, value := s[:pos], s[pos+1:]
+		if value == "" {
+			delete(*m, key)
+		} else {
 	(*m)[key] = value
+		}
+	}
 
 	return nil
 }

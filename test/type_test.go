@@ -88,7 +88,7 @@ func TestTypes(t *testing.T) {
 		}{}
 		app := newApp(&g)
 		app.Run([]string{"--list", "a,b,c", "--list", "d,e,f"})
-		gotwant.Test(t, g.List, gli.StrList([]string{"a", "b", "c", "d", "e", "f"}))
+		gotwant.Test(t, g.List, gli.StrList([]string{"d", "e", "f"}))
 	})
 	t.Run("ptr gli.StrList", func(t *testing.T) {
 		g := struct {
@@ -97,7 +97,7 @@ func TestTypes(t *testing.T) {
 		}{}
 		app := newApp(&g)
 		app.Run([]string{"--list", "a,b,c", "--list", "d,e,f"})
-		gotwant.Test(t, g.List, (*gli.StrList)(&[]string{"a", "b", "c", "d", "e", "f"}))
+		gotwant.Test(t, g.List, (*gli.StrList)(&[]string{"d", "e", "f"}))
 		gotwant.Test(t, g.NilList, (*gli.StrList)(nil), gotwant.Format("%#v"))
 	})
 	t.Run("default ptr gli.IntList", func(t *testing.T) {
@@ -108,20 +108,24 @@ func TestTypes(t *testing.T) {
 		app := newApp(&g)
 		app.Run([]string{"--list2", "2,3,4"})
 		gotwant.Test(t, g.List1, (*gli.IntList)(&[]int{1, 10, 100}))
-		gotwant.Test(t, g.List2, (*gli.IntList)(&[]int{1, 10, 100, 2, 3, 4}))
+		gotwant.Test(t, g.List2, (*gli.IntList)(&[]int{2, 3, 4}))
 	})
 	t.Run("gli.Map", func(t *testing.T) {
 		g := struct {
 			Map1 gli.Map `cli:"D"`
-			Map2 gli.Map `cli:"E" default:"a:b"`
+			Map2 gli.Map `cli:"E" default:"a:b, c:d"`
 		}{}
 		app := newApp(&g)
 		app.Run([]string{})
 		gotwant.Test(t, g.Map1, (gli.Map)(nil))
-		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"a": "b"}))
+		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"a": "b", "c": "d"}))
 
 		app = newApp(&g)
-		app.Run([]string{"-D", `"hoge=hogehoge"`, "-D", "moge:mogemoge"})
+		app.Run([]string{"-D", `"hoge:hogehoge"`, "-D", "moge:mogemoge"})
 		gotwant.Test(t, g.Map1, (gli.Map)(map[string]string{"hoge": "hogehoge", "moge": "mogemoge"}))
+
+		app = newApp(&g)
+		app.Run([]string{"-E", `"a:"`, "-E", "moge:mogemoge"})
+		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"c": "d", "moge": "mogemoge"}))
 	})
 }
