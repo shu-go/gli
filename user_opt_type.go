@@ -86,6 +86,7 @@ func (r *Range) Parse(str string) error {
 type StrList []string
 
 func (l *StrList) Parse(str string) error {
+	*l = (*l)[:0]
 	list := strings.Split(str, ",")
 	for i := 0; i < len(list); i++ {
 		*l = append(*l, strings.TrimSpace(list[i]))
@@ -109,6 +110,7 @@ func (l StrList) Contains(s string) bool {
 type IntList []int
 
 func (l *IntList) Parse(str string) error {
+	*l = (*l)[:0]
 	list := strings.Split(str, ",")
 	for i := 0; i < len(list); i++ {
 		s := strings.TrimSpace(list[i])
