@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/shu_go/cliparser"
+	"github.com/shu-go/cliparser"
 )
 
 var (
