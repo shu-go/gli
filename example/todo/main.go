@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/shu_go/clise"
-	"bitbucket.org/shu_go/gli"
-	"bitbucket.org/shu_go/rog"
+	"github.com/shu-go/clise"
+	"github.com/shu-go/gli"
+	"github.com/shu-go/rog"
 )
 
 var (

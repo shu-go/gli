@@ -13,11 +13,11 @@
 
 # go get
 
-> go get bitbucket.org/shu/gli
+> go get github.com/shu-go/gli
 
 example app:
 
-> go get bitbucket.org/shu/gli/example/todo
+> go get github.com/shu-go/gli/example/todo
 
 This introduces an executable binary `todo`.
 
