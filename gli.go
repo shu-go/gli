@@ -49,7 +49,7 @@ type App struct {
 
 	// global help footer
 
-	// Copyright the app auther has
+	// Copyright the app author has
 	Copyright string
 
 	// tag keys
