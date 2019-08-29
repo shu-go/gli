@@ -80,6 +80,11 @@ type App struct {
 	root   *command
 }
 
+// New makes main gli instance to parse and invoke hooks.
+//
+// App bridges between application logic code and CLI definition (your struct).
+//
+// Next, call Bind() to set the CLI up.
 func New() App {
 	app := App{
 		parser: cliparser.New(),
