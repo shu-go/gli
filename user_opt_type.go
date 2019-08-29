@@ -63,7 +63,7 @@ func (d *Duration) Parse(str string) error {
 	return nil
 }
 
-// Time returns gli.Duration as time.Time
+// Duration returns gli.Duration as time.Time
 func (d Duration) Duration() time.Duration {
 	return time.Duration(d)
 }
