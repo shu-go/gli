@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/shu-go/gli)](https://goreportcard.com/report/github.com/shu-go/gli)
+
 # features
 
 * struct base
