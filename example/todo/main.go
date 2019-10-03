@@ -8,7 +8,6 @@ import (
 
 	"github.com/shu-go/clise"
 	"github.com/shu-go/gli"
-	"github.com/shu-go/rog"
 )
 
 var (
@@ -219,7 +218,6 @@ func (done doneCmd) Run(global *globalCmd, args []string) error {
 }
 
 func main() {
-	rog.EnableDebug()
 	//app := gli.NewWith(&globalCmd{})
 
 	app := gli.New()
