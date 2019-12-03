@@ -35,7 +35,7 @@ func (c command) String() string {
 }
 
 func (c command) LongestName() string {
-	var maxlen int = -1
+	maxlen := -1
 	var maxname string
 	for _, n := range c.Names {
 		nlen := len(n)
@@ -49,7 +49,7 @@ func (c command) LongestName() string {
 }
 
 func (c command) LongestNameStack() []string {
-	var s []string
+	s := make([]string, 0, 1)
 
 	for cmd := &c; cmd != nil; cmd = cmd.Parent {
 		n := cmd.LongestName()
