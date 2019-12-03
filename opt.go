@@ -20,7 +20,7 @@ type option struct {
 }
 
 func (o option) LongestName() string {
-	var maxlen int = -1
+	maxlen := -1
 	var maxname string
 	for _, n := range o.Names {
 		nlen := len(n)
