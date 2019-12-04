@@ -4,16 +4,16 @@
 
 # features
 
-* struct base
-* tag (`cli:"names, n" help:"help message" default:"parsable literal"`) 
-  * for sub commands (cli, help, usage)
-  * for options (cli, help, default, env)
-* sub command as a member struct in a parent struct
-  * sub sub ... command
-* extra sub command
-* user defined option types (example: gli.Range, gli.IntList, ...)
-* pointer type options
-* hook functions Init/Before/Run/After/Help as methods of commands
+- struct base
+- tag (`cli:"names, n" help:"help message" default:"parsable literal"`) 
+  - for sub commands (cli, help, usage)
+  - for options (cli, help, default, env)
+- sub command as a member struct in a parent struct
+  - sub sub ... command
+- extra sub command
+- user defined option types (example: gli.Range, gli.IntList, ...)
+- pointer type options
+- hook functions Init/Before/Run/After/Help as methods of commands
 
 # go get
 
@@ -99,25 +99,25 @@ func (subsub *mySubSub) Run(g *Global, args []string, sub *mySub) {
 }
 ```
 
-* Run
-  * is called for the target command
-* Before
-  * are called for root -> sub -> subsub(target, in this case) 
-  * With any error, Run is not called.
-* After
-  * are called for subsub(target, in this case) -> sub -> root
-* Init
-  * are called for root -> sub -> subsub(target, in this case) 
-  * These functions are for initialization of command struct.
-* Help
-  * prints help message.
-  * subsub(target, in this case) -> root
+- Run
+  - is called for the target command
+- Before
+  - are called for root -> sub -> subsub(target, in this case) 
+  - With any error, Run is not called.
+- After
+  - are called for subsub(target, in this case) -> sub -> root
+- Init
+  - are called for root -> sub -> subsub(target, in this case) 
+  - These functions are for initialization of command struct.
+- Help
+  - prints help message.
+  - subsub(target, in this case) -> root
 
 ### Run
 
 1. Init for all commands
 2. Before for all commands
-   * and defer calling After
+   - and defer calling After
 3. Run
 
 ### Help
@@ -129,8 +129,8 @@ func (subsub *mySubSub) Run(g *Global, args []string, sub *mySub) {
 
 Parameters are in arbitrary order, omittable.
 
-* `[]string`
-* `struct{...}` or `*struct{...}` of command
+- `[]string`
+- `struct{...}` or `*struct{...}` of command
 
 ```go
 // OK
@@ -243,23 +243,23 @@ type Global struct {
 ```
 
 Options:
-* cli
-  * renaming
-  * `cli:"name1, name2, ..., nameZ=PLACE_HOLDER"`
-* default
-  * in string literal
-  * bool, float, int and uint are converted by strconv.ParseXXX
-  * other types are required implement func Parse (see Example7)
-  * use Init hook function for dynamic default values
-* env
-  * environment variable name
-* help
+- cli
+  - renaming
+  - `cli:"name1, name2, ..., nameZ=PLACE_HOLDER"`
+- default
+  - in string literal
+  - bool, float, int and uint are converted by strconv.ParseXXX
+  - other types are required implement func Parse (see Example7)
+  - use Init hook function for dynamic default values
+- env
+  - environment variable name
+- help
 
 Sub commands:
-* cli
-* help
-* usage
-  * multi line usage description separated by \n.
+- cli
+- help
+- usage
+  - multi line usage description separated by \n.
 
 Option value overwriting:
 1. default tag
