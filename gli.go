@@ -199,7 +199,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			}
 
 			clinames := strings.Split(tv, ",")
-			for ni := range clinames {
+			for ni := 0; ni < len(clinames); ni++ {
 				n := strings.TrimSpace(clinames[ni])
 				if strings.Contains(n, "=") {
 					nn := strings.Split(n, "=")
@@ -230,7 +230,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 			//HINT
 			lname := sub.LongestName()
-			for ni := range names {
+			for ni := 0; ni < len(names); ni++ {
 				// a.out cmd1 cmd2
 				// cmd2 [cmd1]
 				g.parser.HintCommand(names[ni], cmd.LongestNameStack())
@@ -261,7 +261,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 			//HINT
 			lname := opt.LongestName()
-			for ni := range names {
+			for ni := 0; ni < len(names); ni++ {
 				if len(names[ni]) > 1 {
 					g.parser.HintLongName(names[ni], cmd.LongestNameStack())
 				}
@@ -291,7 +291,7 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 	}
 
 	nameslice := strings.Split(names, ",")
-	for i := range nameslice {
+	for i := 0; i < len(nameslice); i++ {
 		nameslice[i] = strings.TrimSpace(nameslice[i])
 		g.parser.HintCommand(nameslice[i])
 		g.parser.HintCommand(nameslice[i], []string{"help"})
@@ -303,7 +303,7 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 		Parent: g.root,
 	}
 	lname := cmd.LongestName()
-	for ni := range cmd.Names {
+	for ni := 0; ni < len(cmd.Names); ni++ {
 		g.parser.HintAlias(cmd.Names[ni], lname)
 	}
 
@@ -396,9 +396,9 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 					fmt.Fprintf(g.Stdout, "option %q %v\n\n", c.Name, ErrNotDefined)
 
 					var candidates []string
-					for oi := range cmd.Options {
+					for oi := 0; oi < len(cmd.Options); oi++ {
 						names := cmd.Options[oi].Names
-						for ni := range names {
+						for ni := 0; ni < len(names); ni++ {
 							if strings.HasPrefix(names[ni], c.Name) {
 								candidates = append(candidates, names[ni])
 								break
@@ -493,7 +493,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	// After: subsub->sub->root *deferred*
 
 	if doRun {
-		for ci := range cmdStack {
+		for ci := 0; ci < len(cmdStack); ci++ {
 			callErr, beforeErr := call("Before", cmdStack[ci].SelfV, cmdStack, cmdStack[ci].Args)
 			if callErr == nil && beforeErr != nil {
 				if !g.SuppressErrorOutput {
