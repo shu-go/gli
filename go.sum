@@ -1,7 +1,7 @@
-github.com/mattn/go-runewidth v0.0.4 h1:2BvfKmzob6Bmd4YsL0zygOqfdFnK7GR4QL06Do4/p7Y=
-github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
-github.com/shu-go/cliparser v0.0.0-20190822025044-17b54d2ae1aa h1:/o4k5mrlZXF78Ql4IbmbQwaqGklOYMPd0uQpyGxmYLg=
-github.com/shu-go/cliparser v0.0.0-20190822025044-17b54d2ae1aa/go.mod h1:b89EpZSowgrnN/iRGjwCHlRcIMMQjOGm3NmffyFpF9M=
+github.com/mattn/go-runewidth v0.0.8 h1:3tS41NlGYSmhhe/8fhGRzc+z3AYCw1Fe1WAyLuujKs0=
+github.com/mattn/go-runewidth v0.0.8/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
+github.com/shu-go/cliparser v0.0.0-20200117023617-703f3090516f h1:/6hQXakUpt/eZM/XtPDsQW2PuTXuqLwX7KD0RHM/BkM=
+github.com/shu-go/cliparser v0.0.0-20200117023617-703f3090516f/go.mod h1:h9zBORgtxOkotAowPkA87REX/iR5Kg1OtguILkbX5Vg=
 github.com/shu-go/clise v0.0.0-20190822023516-79849fb81cfe h1:J0rPYz8tjtuwPPbVhIwVgOmLX0LVX18RxUuFs0GGGn0=
 github.com/shu-go/clise v0.0.0-20190822023516-79849fb81cfe/go.mod h1:VLiMEzXMBozBLD37i3id3qPflaupus48v/979ipQ43s=
 github.com/shu-go/gotwant v0.0.0-20190822031422-724391433f13 h1:ny9pVZ7fzuKapDWhfcQwVD5XtO/WUqYDt3BeOgbj+3o=
