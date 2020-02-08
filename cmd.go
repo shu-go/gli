@@ -185,7 +185,11 @@ func (c command) OutputHelp(w io.Writer) {
 			}
 			names = append(names, n)
 			helps = append(helps, o.Help)
-			defdesc = append(defdesc, o.DefValue)
+			if o.DefDesc != "" {
+				defdesc = append(defdesc, o.DefDesc)
+			} else {
+				defdesc = append(defdesc, o.DefValue)
+			}
 
 			w := runewidth.StringWidth(n)
 			if width < w {
@@ -246,7 +250,11 @@ func (c command) OutputHelp(w io.Writer) {
 				}
 				names = append(names, n)
 				helps = append(helps, o.Help)
-				defdesc = append(defdesc, o.DefValue)
+				if o.DefDesc != "" {
+					defdesc = append(defdesc, o.DefDesc)
+				} else {
+					defdesc = append(defdesc, o.DefValue)
+				}
 
 				w := runewidth.StringWidth(n)
 				if width < w {

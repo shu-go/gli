@@ -11,6 +11,7 @@ type option struct {
 
 	Env      string
 	DefValue string
+	DefDesc  string
 
 	Help        string
 	Placeholder string
