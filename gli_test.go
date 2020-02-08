@@ -64,6 +64,7 @@ func TestParseSingle(t *testing.T) {
 		gotwant.Test(t, global.Country, "Nihon")
 		gotwant.Test(t, global.Area1, "Hashi no shita")
 		gotwant.Test(t, args, []string{"a", "b"})
+		os.Setenv("TEST_AREA", "")
 	})
 }
 
