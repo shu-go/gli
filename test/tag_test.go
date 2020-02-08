@@ -144,7 +144,10 @@ func TestTagName(t *testing.T) {
 	gotwant.Test(t, g.Sub.Value1, "default")
 
 	os.Setenv("ENV", "env")
+
 	_, _, err = app.Parse([]string{"subsub"})
 	gotwant.TestError(t, err, nil)
 	gotwant.Test(t, g.Sub.Value1, "env")
+
+	os.Setenv("ENV", "")
 }

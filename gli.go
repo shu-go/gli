@@ -203,8 +203,8 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			}
 
 			clinames := strings.Split(tv, ",")
-			for _, n := range clinames {
-				n = strings.TrimSpace(n)
+			for ni := range clinames {
+				n := strings.TrimSpace(clinames[ni])
 				if strings.Contains(n, "=") {
 					nn := strings.Split(n, "=")
 					n = strings.TrimSpace(nn[0])
@@ -235,18 +235,18 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 			//HINT
 			lname := sub.LongestName()
-			for _, n := range names {
+			for ni := range names {
 				// a.out cmd1 cmd2
 				// cmd2 [cmd1]
-				g.parser.HintCommand(n, cmd.LongestNameStack())
+				g.parser.HintCommand(names[ni], cmd.LongestNameStack())
 				// a.out cmd1 help
 				// help [cmd1]
 				g.parser.HintCommand("help", cmd.LongestNameStack())
 				// a.out cmd1 help cmd2
 				// cmd2 [cmd1 help]
-				g.parser.HintCommand(n, append(cmd.LongestNameStack(), "help"))
-				//rog.Debug("HintAlias", n, lname)
-				g.parser.HintAlias(n, lname)
+				g.parser.HintCommand(names[ni], append(cmd.LongestNameStack(), "help"))
+				//rog.Debug("HintAlias", names[ni], lname)
+				g.parser.HintAlias(names[ni], lname)
 			}
 
 			err := g.scanMeta(ft.Type, sub)
@@ -267,14 +267,14 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 			//HINT
 			lname := opt.LongestName()
-			for _, n := range names {
-				if len(n) > 1 {
-					g.parser.HintLongName(n, cmd.LongestNameStack())
+			for ni := range names {
+				if len(names[ni]) > 1 {
+					g.parser.HintLongName(names[ni], cmd.LongestNameStack())
 				}
 				if !isbool || defvalue != "" {
-					g.parser.HintWithArg(n, cmd.LongestNameStack())
+					g.parser.HintWithArg(names[ni], cmd.LongestNameStack())
 				}
-				g.parser.HintAlias(n, lname)
+				g.parser.HintAlias(names[ni], lname)
 			}
 		}
 	}
@@ -297,10 +297,10 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 	}
 
 	nameslice := strings.Split(names, ",")
-	for i, n := range nameslice {
-		nameslice[i] = strings.TrimSpace(n)
+	for i := range nameslice {
+		nameslice[i] = strings.TrimSpace(nameslice[i])
 		g.parser.HintCommand(nameslice[i])
-		g.parser.HintCommand(n, []string{"help"})
+		g.parser.HintCommand(nameslice[i], []string{"help"})
 	}
 	cmd := command{
 		Names:  nameslice,
@@ -309,8 +309,8 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 		Parent: g.root,
 	}
 	lname := cmd.LongestName()
-	for _, n := range cmd.Names {
-		g.parser.HintAlias(n, lname)
+	for ni := range cmd.Names {
+		g.parser.HintAlias(cmd.Names[ni], lname)
 	}
 
 	for _, init := range inits {
@@ -402,14 +402,15 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 					fmt.Fprintf(g.Stdout, "option %q %v\n\n", c.Name, ErrNotDefined)
 
 					var candidates []string
-					for _, opt := range cmd.Options {
-						for _, name := range opt.Names {
-							if strings.HasPrefix(name, c.Name) {
-								candidates = append(candidates, name)
+					for oi := range cmd.Options {
+						names := cmd.Options[oi].Names
+						for ni := range names {
+							if strings.HasPrefix(names[ni], c.Name) {
+								candidates = append(candidates, names[ni])
 								break
-							} else if re, err := regexp.Compile("[" + name + "]"); err == nil {
+							} else if re, err := regexp.Compile("[" + names[ni] + "]"); err == nil {
 								if len(re.ReplaceAllLiteralString(c.Name, "")) <= len(c.Name)/10 {
-									candidates = append(candidates, name)
+									candidates = append(candidates, names[ni])
 									break
 								}
 							}
@@ -498,12 +499,12 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	// After: subsub->sub->root *deferred*
 
 	if doRun {
-		for _, c := range cmdStack {
-			callErr, beforeErr := call("Before", c.SelfV, cmdStack, c.Args)
+		for ci := range cmdStack {
+			callErr, beforeErr := call("Before", cmdStack[ci].SelfV, cmdStack, cmdStack[ci].Args)
 			if callErr == nil && beforeErr != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "%v\n", beforeErr)
-					c.OutputHelp(g.Stdout)
+					cmdStack[ci].OutputHelp(g.Stdout)
 				}
 				return nil, nil, beforeErr
 			}
@@ -514,7 +515,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				if callErr != nil && appRunErr == nil {
 					appRunErr = afterErr
 				}
-			}(c)
+			}(cmdStack[ci])
 		}
 	}
 
