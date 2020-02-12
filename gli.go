@@ -62,6 +62,8 @@ type App struct {
 	UsageTag string
 	// DefaultTag is a tag key. default: `default`
 	DefaultTag string
+	// DefDescTag is a tag key. default: `defdesc`
+	DefDescTag string
 	// EnvTag is a tag key. default: `env`
 	EnvTag string
 
@@ -93,6 +95,7 @@ func New() App {
 		HelpTag:    "help",
 		UsageTag:   "usage",
 		DefaultTag: "default",
+		DefDescTag: "defdesc",
 		EnvTag:     "env",
 
 		HyphenedCommandName: false,
@@ -188,6 +191,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		names := []string{}
 		var env string
 		var defvalue string
+		var defdesc string
 		var help string
 		var usage string
 		var placeholder string
@@ -214,6 +218,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		}
 
 		defvalue = strings.TrimSpace(tag.Get(g.DefaultTag))
+		defdesc = strings.TrimSpace(tag.Get(g.DefDescTag))
 		env = strings.TrimSpace(tag.Get(g.EnvTag))
 		help = strings.TrimSpace(tag.Get(g.HelpTag))
 		usage = strings.TrimSpace(tag.Get(g.UsageTag))
@@ -253,6 +258,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				Names:       names,
 				Env:         env,
 				DefValue:    defvalue,
+				DefDesc:     defdesc,
 				Help:        help,
 				Placeholder: placeholder,
 				fieldIdx:    i,
