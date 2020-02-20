@@ -12,6 +12,7 @@
 package gli
 
 import (
+	//"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,13 +21,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/pkg/errors"
 	"github.com/shu-go/cliparser"
 )
 
 var (
 	// ErrNotDefined means "an option or a subcommand is not defined in the passed struct".
-	ErrNotDefined = fmt.Errorf("not defined")
+	ErrNotDefined = errors.New("not defined")
 	// ErrNotRunnable means "Run method is not defined for the passed struct".
 	ErrNotRunnable = fmt.Errorf("command not runnable")
 	// ErrOptCanNotBeSet is a reflect related error.
@@ -180,7 +183,11 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		iscmd := false
 		// struct is skipped if a non-Parsable
 		if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
-			if !isStructImplements(ft.Type, reflect.TypeOf((*Parsable)(nil)).Elem()) {
+			if !isStructImplements(ft.Type, reflect.TypeOf((*Parsable)(nil)).Elem()) &&
+				// time.Time
+				(ft.Type.PkgPath() != "time" || ft.Type.Name() != "Time") &&
+				(ft.Type.Kind() != reflect.Ptr || ft.Type.Elem().PkgPath() != "time" || ft.Type.Elem().Name() != "Time") {
+				//
 				iscmd = true
 			}
 		}
@@ -422,7 +429,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 					g.Help(g.Stdout)
 				}
 				//rog.Debug("notdefined")
-				return nil, nil, ErrNotDefined
+				return nil, nil, errors.Wrap(ErrNotDefined, "option "+c.Name)
 			}
 
 			err := setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), c.Arg)
@@ -448,7 +455,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 					g.Help(g.Stdout)
 				}
 				//rog.Debug("notdefined")
-				return nil, nil, ErrNotDefined
+				return nil, nil, errors.Wrap(ErrNotDefined, "command "+c.Name)
 			}
 
 			if !isextra {
@@ -685,13 +692,22 @@ func setOptValue(opt reflect.Value, value string) error {
 		return nil
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		size := int(opt.Type().Size())
-		i, err := strconv.ParseInt(value, 10, size*8)
-		if err != nil {
-			return err
+		if _, ok := opt.Interface().(time.Duration); ok {
+			dur, err := time.ParseDuration(value)
+			if err != nil {
+				return err
+			}
+			opt.Set(reflect.ValueOf(dur))
+			return nil
+		} else {
+			size := int(opt.Type().Size())
+			i, err := strconv.ParseInt(value, 10, size*8)
+			if err != nil {
+				return err
+			}
+			opt.Set(reflect.ValueOf(i).Convert(opt.Type()))
+			return nil
 		}
-		opt.Set(reflect.ValueOf(i).Convert(opt.Type()))
-		return nil
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		size := int(opt.Type().Size())
@@ -710,6 +726,23 @@ func setOptValue(opt reflect.Value, value string) error {
 		}
 		opt.Set(reflect.ValueOf(f).Convert(opt.Type()))
 		return nil
+
+	default:
+		switch opt.Interface().(type) {
+		case time.Time:
+			tm, err := time.ParseInLocation("2006-01-02", value, time.Local)
+			if err != nil {
+				tm, err = time.ParseInLocation("2006/01/02", value, time.Local)
+				if err != nil {
+					return err
+				}
+			}
+			opt.Set(reflect.ValueOf(tm))
+			return nil
+
+		default:
+		}
+
 	}
 
 	return ErrOptCanNotBeSet

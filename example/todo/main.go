@@ -30,7 +30,7 @@ type listCmd struct {
 }
 
 type addCmd struct {
-	DueTo *gli.Date `cli:"due,d=DATE" help:"set due date in form of yyyy-mm-dd"`
+	DueTo *time.Time `cli:"due,d=DATE" help:"set due date in form of yyyy-mm-dd"`
 }
 
 type delCmd struct {
@@ -119,8 +119,7 @@ func (add addCmd) Run(global *globalCmd, args []string) error {
 			CreatedAt: time.Now(),
 		}
 		if add.DueTo != nil {
-			dueto := add.DueTo.Time()
-			t.DueTo = &dueto
+			t.DueTo = add.DueTo
 		}
 		list = append(list, t)
 	}

@@ -17,6 +17,9 @@ type Parsable interface {
 
 // Date is a parsable type of date.
 //
+// DEPLICATED: use time.Time instead.
+// CAUTION: time.Time is Local timezone, gli.Date is UTC.
+//
 // see https://golang.org/pkg/time/#ParseDuration
 type Date time.Time
 
@@ -45,6 +48,8 @@ func (d Date) Time() time.Time {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Duration is a parsable type of time duration.
+//
+// DEPLICATED: use time.Duration instead.
 //
 // see https://golang.org/pkg/time/#ParseDuration
 type Duration time.Duration
