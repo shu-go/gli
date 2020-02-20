@@ -1,5 +1,7 @@
 github.com/mattn/go-runewidth v0.0.8 h1:3tS41NlGYSmhhe/8fhGRzc+z3AYCw1Fe1WAyLuujKs0=
 github.com/mattn/go-runewidth v0.0.8/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/shu-go/cliparser v0.0.0-20200117023617-703f3090516f h1:/6hQXakUpt/eZM/XtPDsQW2PuTXuqLwX7KD0RHM/BkM=
 github.com/shu-go/cliparser v0.0.0-20200117023617-703f3090516f/go.mod h1:h9zBORgtxOkotAowPkA87REX/iR5Kg1OtguILkbX5Vg=
 github.com/shu-go/clise v0.0.0-20190822023516-79849fb81cfe h1:J0rPYz8tjtuwPPbVhIwVgOmLX0LVX18RxUuFs0GGGn0=
