@@ -49,7 +49,7 @@ func (c command) LongestName() string {
 }
 
 func (c command) LongestNameStack() []string {
-	s := make([]string, 0, 1)
+	var s []string
 
 	for cmd := &c; cmd != nil; cmd = cmd.Parent {
 		n := cmd.LongestName()
