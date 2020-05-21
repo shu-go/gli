@@ -224,7 +224,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			names = append(names, strings.ToLower(name))
 		}
 
-		defvalue = strings.TrimSpace(tag.Get(g.DefaultTag))
+		defvalue = tag.Get(g.DefaultTag)
 		defdesc = strings.TrimSpace(tag.Get(g.DefDescTag))
 		env = strings.TrimSpace(tag.Get(g.EnvTag))
 		help = strings.TrimSpace(tag.Get(g.HelpTag))
@@ -381,7 +381,6 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	for {
 		c := g.parser.GetComponent()
-		//rog.Debug("c", c)
 		if c == nil {
 			break
 		}
