@@ -278,7 +278,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				if len(names[ni]) > 1 {
 					g.parser.HintLongName(names[ni], cmd.LongestNameStack())
 				}
-				if !isbool || defvalue != "" {
+				if !isbool {
 					g.parser.HintWithArg(names[ni], cmd.LongestNameStack())
 				}
 				g.parser.HintAlias(names[ni], lname)
