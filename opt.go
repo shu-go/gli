@@ -7,7 +7,6 @@ import (
 
 type option struct {
 	Names []string
-	Kind  reflect.Kind
 
 	Env      string
 	DefValue string
