@@ -17,6 +17,8 @@ type option struct {
 
 	OwnerV   reflect.Value
 	fieldIdx int
+
+	nondefFirstParsing bool
 }
 
 func (o option) LongestName() string {
