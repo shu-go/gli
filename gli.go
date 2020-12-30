@@ -183,7 +183,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		iscmd := false
 		// struct is skipped if a non-Parsable
 		if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
-			if !isStructImplements(ft.Type, reflect.TypeOf((*Parsable)(nil)).Elem()) &&
+			if !isStructImplements(ft.Type, reflect.TypeOf((*OptionParser)(nil)).Elem()) &&
 				// time.Time
 				(ft.Type.PkgPath() != "time" || ft.Type.Name() != "Time") &&
 				(ft.Type.Kind() != reflect.Ptr || ft.Type.Elem().PkgPath() != "time" || ft.Type.Elem().Name() != "Time") {
@@ -262,13 +262,14 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			}
 		} else {
 			opt := &option{
-				Names:       names,
-				Env:         env,
-				DefValue:    defvalue,
-				DefDesc:     defdesc,
-				Help:        help,
-				Placeholder: placeholder,
-				fieldIdx:    i,
+				Names:              names,
+				Env:                env,
+				DefValue:           defvalue,
+				DefDesc:            defdesc,
+				Help:               help,
+				Placeholder:        placeholder,
+				fieldIdx:           i,
+				nondefFirstParsing: true,
 			}
 			cmd.Options = append(cmd.Options, opt)
 
@@ -431,7 +432,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				return nil, nil, errors.Wrap(ErrNotDefined, "option "+c.Name)
 			}
 
-			err := setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), c.Arg)
+			err := setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), c.Arg, false, &o.nondefFirstParsing)
 			if err != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "option %q: %v\n\n", c.Name, err)
@@ -650,7 +651,7 @@ func findStructByType(stack []*command, typ reflect.Type) interface{} {
 	return nil
 }
 
-func setOptValue(opt reflect.Value, value string) error {
+func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstParsing *bool) error {
 	if opt.Type().Kind() == reflect.Ptr {
 		var pv reflect.Value
 		if opt.IsNil() {
@@ -659,7 +660,7 @@ func setOptValue(opt reflect.Value, value string) error {
 			pv = opt
 		}
 
-		err := setOptValue(pv.Elem(), value)
+		err := setOptValue(pv.Elem(), value, parsingDef, nondefFirstParsing)
 		if err != nil {
 			return err
 		}
@@ -667,12 +668,19 @@ func setOptValue(opt reflect.Value, value string) error {
 		opt.Set(pv)
 		return nil
 	}
-	p, ok := opt.Interface().(Parsable)
-	if ok {
+
+	ndfp := *nondefFirstParsing
+	if !parsingDef && *nondefFirstParsing {
+		*nondefFirstParsing = false
+	}
+	if p, ok := opt.Interface().(MultipleOptionParser); ok {
+		return p.Parse(value, ndfp)
+	} else if p, ok := opt.Interface().(OptionParser); ok {
 		return p.Parse(value)
 	} else if opt.CanAddr() {
-		p, ok := opt.Addr().Interface().(Parsable)
-		if ok {
+		if p, ok := opt.Addr().Interface().(MultipleOptionParser); ok {
+			return p.Parse(value, ndfp)
+		} else if p, ok := opt.Addr().Interface().(OptionParser); ok {
 			return p.Parse(value)
 		}
 	}

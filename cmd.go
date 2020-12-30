@@ -109,12 +109,14 @@ func (c *command) setMembersReferMe() {
 func (c *command) setDefaultValues() {
 	for _, o := range c.Options {
 		if o.DefValue != "" {
-			_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), o.DefValue)
+			var dummy bool
+			_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), o.DefValue, true, &dummy)
 		}
 		if o.Env != "" {
 			envvalue := os.Getenv(o.Env)
 			if envvalue != "" {
-				_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), envvalue)
+				var dummy bool
+				_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), envvalue, true, &dummy)
 			}
 		}
 	}

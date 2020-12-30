@@ -8,9 +8,18 @@ import (
 	"time"
 )
 
-// Parsable represents an string->YOURTYPE convertible
-type Parsable interface {
+// OptionParser sets a converted value to itself.
+type OptionParser interface {
+	// Parse parses string str and converts it to the receiver's type.
 	Parse(str string) error
+}
+
+// MultipleOptionParser sets a converted value to itself.
+// This is for options where the value is passed multiple times, such as in a list.
+type MultipleOptionParser interface {
+	// Parse parses string str and converts it to the receiver's type.
+	// Bool nondefFirst is true if you shuld re-initialize.
+	Parse(str string, nondefFirst bool) error
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,8 +113,10 @@ type StrList []string
 // Parse parses string str and stores it as gli.StrList ([]string)
 //
 // examples: "a,b,c"
-func (l *StrList) Parse(str string) error {
-	*l = (*l)[:0]
+func (l *StrList) Parse(str string, nondefFirst bool) error {
+	if nondefFirst {
+		*l = (*l)[:0]
+	}
 	list := strings.Split(str, ",")
 	for i := 0; i < len(list); i++ {
 		*l = append(*l, strings.TrimSpace(list[i]))
@@ -132,8 +143,10 @@ type IntList []int
 // Parse parses string str and stores it as gli.IntList ([]int)
 //
 // examples: "1,2,3"
-func (l *IntList) Parse(str string) error {
-	*l = (*l)[:0]
+func (l *IntList) Parse(str string, nondefFirst bool) error {
+	if nondefFirst {
+		*l = (*l)[:0]
+	}
 	list := strings.Split(str, ",")
 	for i := 0; i < len(list); i++ {
 		s := strings.TrimSpace(list[i])
@@ -159,14 +172,14 @@ func (l IntList) Contains(i int) bool {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Map is a parsable type of key=value or key:value pair.
+// Map is a parsable type of key:value pair.
 type Map map[string]string
 
 // Parse parses string str and stores it as gli.Map (map[string]string)
 //
 // examples: "key1:value1,key2:value2"
-func (m *Map) Parse(str string) error {
-	if *m == nil {
+func (m *Map) Parse(str string, nondefFirst bool) error {
+	if *m == nil || nondefFirst {
 		*m = make(map[string]string)
 	}
 
