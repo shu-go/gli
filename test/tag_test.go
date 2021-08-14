@@ -151,3 +151,71 @@ func TestTagName(t *testing.T) {
 
 	os.Setenv("ENV", "")
 }
+
+func TestRequired(t *testing.T) {
+	g := struct {
+		A string `cli:"a" required:"true"`
+		B string `cli:"b" required:"true" default:"B"`
+		C string `cli:"c"`
+	}{}
+	orig := g
+
+	g = orig
+	app := newApp(&g)
+	err := app.Run([]string{})
+	gotwant.TestError(t, err, "required")
+
+	g = orig
+	wantg := orig
+	wantg.A = "ABC"
+	wantg.B = "B"
+	wantg.C = ""
+	app = newApp(&g)
+	err = app.Run([]string{"-a", "ABC"})
+	gotwant.TestError(t, err, "required")
+
+	g = orig
+	wantg = orig
+	wantg.A = "ABC"
+	wantg.B = "B"
+	wantg.C = ""
+	app = newApp(&g)
+	err = app.Run([]string{"-a", "ABC", "-b", "B"})
+	gotwant.TestError(t, err, nil)
+	gotwant.Test(t, g, wantg)
+}
+
+func TestRequiredNested(t *testing.T) {
+	g := struct {
+		A string `cli:"a" required:"true"`
+		S struct {
+			B string `cli:"b" required:"true"`
+		} `cli:"s"`
+	}{}
+	origg := g
+
+	app := newApp(&g)
+	err := app.Run([]string{})
+	gotwant.TestError(t, err, "required")
+
+	g = origg
+	wantg := origg
+	wantg.A = "A"
+	app = newApp(&g)
+	err = app.Run([]string{"-a", "A"})
+	gotwant.TestError(t, err, nil)
+	gotwant.Test(t, g, wantg)
+
+	app = newApp(&g)
+	err = app.Run([]string{"-a", "A", "s"})
+	gotwant.TestError(t, err, "required")
+
+	g = origg
+	wantg = origg
+	wantg.A = "A"
+	wantg.S.B = "B"
+	app = newApp(&g)
+	err = app.Run([]string{"-a", "A", "s", "-b", "B"})
+	gotwant.TestError(t, err, nil)
+	gotwant.Test(t, g, wantg)
+}

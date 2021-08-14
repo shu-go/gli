@@ -7,7 +7,7 @@
 - struct base
 - tag (`cli:"names, n" help:"help message" default:"parsable literal"`) 
   - for sub commands (cli, help, usage)
-  - for options (cli, help, default, env)
+  - for options (cli, help, default, env, required)
 - sub command as a member struct in a parent struct
   - sub sub ... command
 - extra sub command
@@ -238,6 +238,7 @@ type Global struct {
 ```go
 type Global struct {
     Opt1 string `cli:"opt1=PLACE_HOLDER" default:"default value" env:"ENV_OPT1" help:"help message"`
+    Opt2 int    `cli:"opt2" required:"true"`
     Sub MySub   `cli:"sub" help:"help message" usage:"multi line usages\nseparated by \\n"`
 }
 ```
@@ -253,6 +254,11 @@ Options:
   - use Init hook function for dynamic default values
 - env
   - environment variable name
+- required
+  - bool (true/false)
+    - true if the option is given in the command line
+  - checked just before Before or Run hook function is executed
+  - this check is not affected by Init, Before, After hook function nor default tag
 - help
 
 Sub commands:
