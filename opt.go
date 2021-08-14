@@ -12,6 +12,9 @@ type option struct {
 	DefValue string
 	DefDesc  string
 
+	Required bool
+	Assigned bool
+
 	Help        string
 	Placeholder string
 
@@ -41,5 +44,6 @@ func (o option) String() string {
 
 func (o *option) SetValue(value interface{}) error {
 	o.OwnerV.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(value))
+	o.Assigned = true
 	return nil
 }

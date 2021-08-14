@@ -69,6 +69,8 @@ type App struct {
 	DefDescTag string
 	// EnvTag is a tag key. default: `env`
 	EnvTag string
+	// RequiredTag is a tag key. default: `required`
+	RequiredTag string
 
 	// MyCommandABC => false(default): "mycommandabc" , true: "my-command-abc"
 	HyphenedCommandName bool
@@ -94,12 +96,13 @@ func New() App {
 	app := App{
 		parser: cliparser.New(),
 
-		CliTag:     "cli",
-		HelpTag:    "help",
-		UsageTag:   "usage",
-		DefaultTag: "default",
-		DefDescTag: "defdesc",
-		EnvTag:     "env",
+		CliTag:      "cli",
+		HelpTag:     "help",
+		UsageTag:    "usage",
+		DefaultTag:  "default",
+		DefDescTag:  "defdesc",
+		EnvTag:      "env",
+		RequiredTag: "required",
 
 		HyphenedCommandName: false,
 		HyphenedOptionName:  false,
@@ -197,6 +200,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 		names := []string{}
 		var env string
+		var required bool
 		var defvalue string
 		var defdesc string
 		var help string
@@ -227,6 +231,10 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		defvalue = tag.Get(g.DefaultTag)
 		defdesc = strings.TrimSpace(tag.Get(g.DefDescTag))
 		env = strings.TrimSpace(tag.Get(g.EnvTag))
+		required, err := strconv.ParseBool(strings.TrimSpace(tag.Get(g.RequiredTag)))
+		if err != nil {
+			required = false
+		}
 		help = strings.TrimSpace(tag.Get(g.HelpTag))
 		usage = strings.TrimSpace(tag.Get(g.UsageTag))
 
@@ -266,6 +274,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				Env:                env,
 				DefValue:           defvalue,
 				DefDesc:            defdesc,
+				Required:           required,
 				Help:               help,
 				Placeholder:        placeholder,
 				fieldIdx:           i,
@@ -440,6 +449,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				}
 				return nil, nil, err
 			}
+			o.Assigned = true
 
 		case cliparser.Command: // may be an arg
 			if len(cmd.Subs)+len(cmd.Extras) == 0 {
@@ -497,6 +507,11 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 		}
 
 		return nil, nil, helpErr
+	}
+
+	err := errorIfEmptyRequired(cmdStack)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// call Before->Run->After
@@ -753,6 +768,23 @@ func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstPa
 	}
 
 	return ErrOptCanNotBeSet
+}
+
+func errorIfEmptyRequired(cmdStack []*command) error {
+	for i := len(cmdStack) - 1; i >= 0; i-- {
+		c := cmdStack[i]
+		for _, o := range c.Options {
+			if !o.Required {
+				continue
+			}
+
+			if !o.Assigned {
+				return errors.New("option " + o.Names[len(o.Names)-1] + " is required")
+			}
+		}
+	}
+
+	return nil
 }
 
 // Help displays help messages.
