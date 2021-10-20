@@ -779,7 +779,7 @@ func errorIfEmptyRequired(cmdStack []*command) error {
 			}
 
 			if !o.Assigned {
-				return errors.New("option " + o.Names[len(o.Names)-1] + " is required")
+				return errors.New("option " + o.LongestName() + " is required")
 			}
 		}
 	}
