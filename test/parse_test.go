@@ -191,3 +191,19 @@ func TestHyphen(t *testing.T) {
 		gotwant.Test(t, c.C, -3)
 	})
 }
+
+func TestBool(t *testing.T) {
+	c := struct {
+		Yes        bool
+		No         bool
+		False2True bool `default:"false"`
+		True2False bool `default:"true"`
+	}{}
+	app := newApp(&c)
+	err := app.Run([]string{"--yes", "--false2true", "--no-true2false"})
+	gotwant.TestError(t, err, nil)
+	gotwant.Test(t, c.Yes, true)
+	gotwant.Test(t, c.No, false)
+	gotwant.Test(t, c.False2True, true)
+	gotwant.Test(t, c.True2False, false)
+}

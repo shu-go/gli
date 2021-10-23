@@ -83,6 +83,16 @@ type App struct {
 	SuppressErrorOutput bool
 	Stdout, Stderr      *os.File
 
+	// true(default): bool options have --no-xxx options.
+	// AutoNoBoolOptions also appends --no-xxx descriptions in help doc if .
+	//
+	// Options:
+	//   opt1, o1  A bool option
+	//   opt2, o2  A bool option (default: true)
+	//     --no-opt2
+	//   opt1, o1  A bool option
+	AutoNoBoolOptions bool
+
 	parser cliparser.Parser
 	root   *command
 }
@@ -107,8 +117,10 @@ func New() App {
 		HyphenedCommandName: false,
 		HyphenedOptionName:  false,
 		OptionsGrouped:      true,
-		Stdout:              os.Stdout,
-		Stderr:              os.Stderr,
+		AutoNoBoolOptions:   true,
+
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 
 	//HINT
@@ -148,7 +160,10 @@ func (g *App) Bind(ptrSt interface{}) error {
 		g.parser.HintNoOptionsGrouped()
 	}
 
-	g.root = &command{SelfV: v}
+	g.root = &command{
+		SelfV:             v,
+		AutoNoBoolOptions: g.AutoNoBoolOptions,
+	}
 
 	return g.scanMeta(v.Type(), g.root)
 }
@@ -228,6 +243,18 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			names = append(names, strings.ToLower(name))
 		}
 
+		/*
+			if !iscmd && isbool {
+				ln := names[0]
+				for _, n := range names {
+					if len(ln) < len(n) {
+						ln = n
+					}
+				}
+				names = append(names, "no-"+ln)
+			}
+		*/
+
 		defvalue = tag.Get(g.DefaultTag)
 		defdesc = strings.TrimSpace(tag.Get(g.DefDescTag))
 		env = strings.TrimSpace(tag.Get(g.EnvTag))
@@ -240,11 +267,12 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 		if iscmd /* f.Kind() == reflect.Struct */ {
 			sub := &command{
-				Names:    names,
-				Help:     help,
-				Usage:    usage,
-				fieldIdx: i,
-				Parent:   cmd,
+				Names:             names,
+				Help:              help,
+				Usage:             usage,
+				fieldIdx:          i,
+				Parent:            cmd,
+				AutoNoBoolOptions: g.AutoNoBoolOptions,
 			}
 			cmd.Subs = append(cmd.Subs, sub)
 
@@ -320,10 +348,11 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 		g.parser.HintCommand(nameslice[i], []string{"help"})
 	}
 	cmd := command{
-		Names:  nameslice,
-		Help:   help,
-		SelfV:  v,
-		Parent: g.root,
+		Names:             nameslice,
+		Help:              help,
+		SelfV:             v,
+		Parent:            g.root,
+		AutoNoBoolOptions: g.AutoNoBoolOptions,
 	}
 	lname := cmd.LongestName()
 	for ni := 0; ni < len(cmd.Names); ni++ {
@@ -412,9 +441,18 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 		case cliparser.Option:
 			//rog.Debug(c.Name)
 			o := cmd.FindOptionExact(c.Name)
+
+			// "--no-bool" ?
+			if g.AutoNoBoolOptions && o == nil && strings.HasPrefix(c.Name, "no-") {
+				o = cmd.FindOptionExact(c.Name[3:])
+				if o != nil && o.OwnerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+					c.Name = c.Name[3:]
+					c.Arg = "false"
+				}
+			}
+
 			if o == nil {
 				if !g.SuppressErrorOutput {
-					//rog.Debug("notdefined")
 					fmt.Fprintf(g.Stdout, "option %q %v\n\n", c.Name, ErrNotDefined)
 
 					var candidates []string
@@ -437,7 +475,6 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 					}
 					g.Help(g.Stdout)
 				}
-				//rog.Debug("notdefined")
 				return nil, nil, errors.Wrap(ErrNotDefined, "option "+c.Name)
 			}
 
