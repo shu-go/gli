@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	runewidth "github.com/mattn/go-runewidth"
@@ -28,6 +29,8 @@ type command struct {
 	SelfV    reflect.Value
 	OwnerV   reflect.Value
 	fieldIdx int
+
+	AutoNoBoolOptions bool
 }
 
 func (c command) String() string {
@@ -165,11 +168,13 @@ func (c command) OutputHelp(w io.Writer) {
 		fmt.Fprintln(w, "Options:")
 
 		var names []string
+		var nonames []string
 		var helps []string
 		var defdesc []string
 		width := 0
 
 		for _, o := range c.Options {
+
 			var onames []string
 			onames = append(onames, o.Names...)
 			for i, n := range onames {
@@ -186,6 +191,21 @@ func (c command) OutputHelp(w io.Writer) {
 				n += " " + o.Placeholder
 			}
 			names = append(names, n)
+			if c.AutoNoBoolOptions && o.OwnerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+				b, err := strconv.ParseBool(o.DefValue)
+				if err != nil {
+					b = false
+				}
+				if b {
+					oname := strings.TrimLeft(onames[len(onames)-1], "-")
+					nonames = append(nonames, "--no-"+oname)
+				} else {
+					nonames = append(nonames, "")
+				}
+			} else {
+				nonames = append(nonames, "")
+			}
+
 			helps = append(helps, o.Help)
 			if o.DefDesc != "" {
 				defdesc = append(defdesc, o.DefDesc)
@@ -210,6 +230,10 @@ func (c command) OutputHelp(w io.Writer) {
 			}
 
 			fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
+
+			if nonames[i] != "" {
+				fmt.Fprintf(w, "    %s\n", nonames[i])
+			}
 		}
 	}
 
@@ -230,6 +254,7 @@ func (c command) OutputHelp(w io.Writer) {
 			fmt.Fprintf(w, "%s Options:\n", currname)
 
 			var names []string
+			var nonames []string
 			var helps []string
 			var defdesc []string
 			width := 0
@@ -251,6 +276,21 @@ func (c command) OutputHelp(w io.Writer) {
 					n += " " + o.Placeholder
 				}
 				names = append(names, n)
+				if curr.AutoNoBoolOptions && o.OwnerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+					b, err := strconv.ParseBool(o.DefValue)
+					if err != nil {
+						b = false
+					}
+					if b {
+						oname := strings.TrimLeft(onames[len(onames)-1], "-")
+						nonames = append(nonames, "--no-"+oname)
+					} else {
+						nonames = append(nonames, "")
+					}
+				} else {
+					nonames = append(nonames, "")
+				}
+
 				helps = append(helps, o.Help)
 				if o.DefDesc != "" {
 					defdesc = append(defdesc, o.DefDesc)
@@ -275,6 +315,10 @@ func (c command) OutputHelp(w io.Writer) {
 				}
 
 				fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
+
+				if nonames[i] != "" {
+					fmt.Fprintf(w, "    %s\n", nonames[i])
+				}
 			}
 		}
 	}
