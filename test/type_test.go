@@ -187,11 +187,11 @@ func TestTypes(t *testing.T) {
 		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"a": "b", "c": "d"}))
 
 		app = newApp(&g)
-		app.Run([]string{"-D", `"hoge:hogehoge"`, "-D", "moge:mogemoge"})
+		app.Run([]string{"-D", `hoge:hogehoge`, "-D", "moge:mogemoge"})
 		gotwant.Test(t, g.Map1, (gli.Map)(map[string]string{"hoge": "hogehoge", "moge": "mogemoge"}))
 
 		app = newApp(&g)
-		app.Run([]string{"-E", `"a:"`, "-E", "moge:mogemoge"})
+		app.Run([]string{"-E", `a:`, "-E", "moge:mogemoge"})
 		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"moge": "mogemoge"}))
 	})
 }
