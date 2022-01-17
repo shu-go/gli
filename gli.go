@@ -407,6 +407,9 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	_, defErr := call("Init", cmd.SelfV, cmdStack, cmd.Args)
 	if defErr != nil {
+		if !g.SuppressErrorOutput {
+			fmt.Fprintf(g.Stderr, "%v\n", defErr)
+		}
 		return nil, nil, defErr
 	}
 
@@ -415,6 +418,9 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	g.parser.Reset()
 	g.parser.Feed(args)
 	if err := g.parser.Parse(); err != nil {
+		if !g.SuppressErrorOutput {
+			fmt.Fprintf(g.Stderr, "%v\n", err)
+		}
 		return nil, nil, err
 	}
 
