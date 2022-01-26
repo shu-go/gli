@@ -78,6 +78,7 @@ type App struct {
 	HyphenedOptionName bool
 	// OptionsGrouped(default: true) allows -abc may be treated as -a -b -c.
 	OptionsGrouped bool
+	DoubleHyphen   bool
 
 	// SuppressErrorOutput is an option to suppresses on cli parsing error.
 	SuppressErrorOutput bool
@@ -118,6 +119,7 @@ func New() App {
 		HyphenedOptionName:  false,
 		OptionsGrouped:      true,
 		AutoNoBoolOptions:   true,
+		DoubleHyphen:        true,
 
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
@@ -395,6 +397,10 @@ func (g *App) Run(args []string) error {
 
 func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string, appRunErr error) {
 	cmd := g.root
+
+	if !g.DoubleHyphen {
+		g.parser.HintDisableDoubleHyphen()
+	}
 
 	if len(args) == len(os.Args) && len(args) > 0 && args[0] == os.Args[0] {
 		args = make([]string, len(os.Args)-1)
