@@ -411,7 +411,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	cmd.setMembersReferMe()
 	cmd.setDefaultValues()
 
-	_, defErr := call("Init", cmd.SelfV, cmdStack, cmd.Args)
+	_, defErr := g.call("Init", cmd.SelfV, cmdStack, cmd.Args)
 	if defErr != nil {
 		if !g.SuppressErrorOutput {
 			fmt.Fprintf(g.Stderr, "%v\n", defErr)
@@ -532,7 +532,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			cmd.setMembersReferMe()
 			cmd.setDefaultValues()
 
-			_, defErr := call("Init", cmd.SelfV, cmdStack, cmd.Args)
+			_, defErr := g.call("Init", cmd.SelfV, cmdStack, cmd.Args)
 			if defErr != nil {
 				return nil, nil, defErr
 			}
@@ -542,9 +542,9 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	if helpMode {
 		funcName := "Help"
 
-		callErr, helpErr := call(funcName, cmd.SelfV, cmdStack, cmd.Args)
+		callErr, helpErr := g.call(funcName, cmd.SelfV, cmdStack, cmd.Args)
 		if callErr == ErrNotRunnable {
-			callErr, helpErr = call(funcName, g.root.SelfV, cmdStack, g.root.Args)
+			callErr, helpErr = g.call(funcName, g.root.SelfV, cmdStack, g.root.Args)
 		}
 
 		if callErr != nil {
@@ -571,7 +571,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	if doRun {
 		for ci := 0; ci < len(cmdStack); ci++ {
-			callErr, beforeErr := call("Before", cmdStack[ci].SelfV, cmdStack, cmdStack[ci].Args)
+			callErr, beforeErr := g.call("Before", cmdStack[ci].SelfV, cmdStack, cmdStack[ci].Args)
 			if callErr == nil && beforeErr != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "%v\n", beforeErr)
@@ -582,7 +582,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 			defer func(cmd *command) {
 				// After()
-				callErr, afterErr := call("After", cmd.SelfV, cmdStack, cmd.Args)
+				callErr, afterErr := g.call("After", cmd.SelfV, cmdStack, cmd.Args)
 				if callErr != nil && appRunErr == nil {
 					appRunErr = afterErr
 				}
@@ -593,7 +593,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	if doRun {
 		funcName := "Run"
 
-		callErr, runErr := call(funcName, cmd.SelfV, cmdStack, cmd.Args)
+		callErr, runErr := g.call(funcName, cmd.SelfV, cmdStack, cmd.Args)
 
 		if callErr != nil {
 			if cmd == g.root {
@@ -652,7 +652,7 @@ func isStructImplements(st reflect.Type, iface reflect.Type) bool {
 	return reflect.PtrTo(st).Implements(iface) || st.Implements(iface)
 }
 
-func call(funcName string, cmd reflect.Value, cmdStack []*command, args []string) (callErr, userErr error) {
+func (g *App) call(funcName string, cmd reflect.Value, cmdStack []*command, args []string) (callErr, userErr error) {
 	methv := cmd.MethodByName(funcName)
 	if methv == (reflect.Value{}) {
 		return ErrNotRunnable, nil
@@ -664,17 +664,23 @@ func call(funcName string, cmd reflect.Value, cmdStack []*command, args []string
 
 		if in.Kind() == reflect.Struct {
 			st := findStructByType(cmdStack, in)
-			if st == nil {
+			if st != nil {
+				argv = append(argv, reflect.ValueOf(st).Elem())
+			} else if reflect.TypeOf(g) == in {
+				argv = append(argv, reflect.ValueOf(*g))
+			} else {
 				return ErrNotRunnable, nil
 			}
-			argv = append(argv, reflect.ValueOf(st).Elem())
 
 		} else if in.Kind() == reflect.Ptr && in.Elem().Kind() == reflect.Struct {
 			st := findStructByType(cmdStack, in)
-			if st == nil {
+			if st != nil {
+				argv = append(argv, reflect.ValueOf(st))
+			} else if reflect.TypeOf(g) == in {
+				argv = append(argv, reflect.ValueOf(g))
+			} else {
 				return ErrNotRunnable, nil
 			}
-			argv = append(argv, reflect.ValueOf(st))
 
 		} else if in.Kind() == reflect.Slice && in.Elem().Kind() == reflect.String {
 			// args
