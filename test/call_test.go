@@ -1,10 +1,14 @@
 package test
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"testing"
 
+	"github.com/shu-go/gli"
 	"github.com/shu-go/gotwant"
+	"github.com/shu-go/rog"
 )
 
 type callGlobal struct {
@@ -82,6 +86,18 @@ func TestCall(t *testing.T) {
 		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, g.result, ":global_init:sub_init:subsub_init:global_before:sub_before:subsub_before:subsub_run:subsub_after:sub_after:global_after")
 	})
+
+	t.Run("App", func(t *testing.T) {
+		rog.EnableDebug()
+		app := gli.NewWith(&AGlobal{})
+		globalApp = &app
+		globalApp.Name = "Global App"
+		rog.Debug("hoge")
+		err := globalApp.Run([]string{})
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, globalApp.Name, "OK")
+		rog.DisableDebug()
+	})
 }
 
 type callGlobal2 struct {
@@ -111,4 +127,26 @@ func TestRunSignature(t *testing.T) {
 	err := app.Run([]string{"--opt", "rei", "sub1", "--opt", "ichi", "sub2", "--opt", "ni", "sub3", "--opt", "san", "shi", "go", "roku"})
 	gotwant.TestError(t, err, nil)
 	gotwant.Test(t, g.result, "global:rei, sub1:ichi, sub2:ni, sub3:san, args:[shi go roku]")
+}
+
+var globalApp *gli.App
+
+type AGlobal struct {
+}
+
+func (g AGlobal) Run(app *gli.App) error {
+	if app != globalApp {
+		fmt.Fprintf(os.Stderr, "app?: %T\n", app)
+		fmt.Fprintf(os.Stderr, "app: %p\n", app)
+		fmt.Fprintf(os.Stderr, "globalApp: %p\n", globalApp)
+		return errors.New("not an app!")
+	}
+
+	if app.Name != "Global App" {
+		return errors.New("not a app's name!")
+	}
+
+	app.Name = "OK"
+
+	return nil
 }
