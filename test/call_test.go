@@ -3,12 +3,10 @@ package test
 import (
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/shu-go/gli"
 	"github.com/shu-go/gotwant"
-	"github.com/shu-go/rog"
 )
 
 type callGlobal struct {
@@ -88,15 +86,19 @@ func TestCall(t *testing.T) {
 	})
 
 	t.Run("App", func(t *testing.T) {
-		rog.EnableDebug()
-		app := gli.NewWith(&AGlobal{})
+		app := newApp(&AGlobal{})
 		globalApp = &app
 		globalApp.Name = "Global App"
-		rog.Debug("hoge")
 		err := globalApp.Run([]string{})
 		gotwant.TestError(t, err, nil)
 		gotwant.Test(t, globalApp.Name, "OK")
-		rog.DisableDebug()
+
+		app = newApp(&AAGlobal{})
+		globalApp = &app
+		globalApp.Name = "Global App"
+		err = globalApp.Run([]string{})
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, globalApp.Name, "Global App")
 	})
 }
 
@@ -136,9 +138,23 @@ type AGlobal struct {
 
 func (g AGlobal) Run(app *gli.App) error {
 	if app != globalApp {
-		fmt.Fprintf(os.Stderr, "app?: %T\n", app)
-		fmt.Fprintf(os.Stderr, "app: %p\n", app)
-		fmt.Fprintf(os.Stderr, "globalApp: %p\n", globalApp)
+		return errors.New("not an app!")
+	}
+
+	if app.Name != "Global App" {
+		return errors.New("not a app's name!")
+	}
+
+	app.Name = "OK"
+
+	return nil
+}
+
+type AAGlobal struct {
+}
+
+func (g AAGlobal) Run(app gli.App) error {
+	if app.Name != globalApp.Name {
 		return errors.New("not an app!")
 	}
 
