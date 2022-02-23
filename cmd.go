@@ -171,6 +171,7 @@ func (c command) OutputHelp(w io.Writer) {
 		var nonames []string
 		var helps []string
 		var defdesc []string
+		var envs []string
 		width := 0
 
 		for _, o := range c.Options {
@@ -212,6 +213,7 @@ func (c command) OutputHelp(w io.Writer) {
 			} else {
 				defdesc = append(defdesc, o.DefValue)
 			}
+			envs = append(envs, o.Env)
 
 			w := runewidth.StringWidth(n)
 			if width < w {
@@ -224,12 +226,19 @@ func (c command) OutputHelp(w io.Writer) {
 		for i, n := range names {
 			spaces := strings.Repeat(" ", width-runewidth.StringWidth(n))
 
-			def := ""
+			var des []string
 			if len(defdesc[i]) > 0 {
-				def = " (default: " + defdesc[i] + ")"
+				des = append(des, "default: "+defdesc[i])
+			}
+			if len(envs[i]) > 0 {
+				des = append(des, "env: "+envs[i])
+			}
+			var de string
+			if len(des) > 0 {
+				de = " (" + strings.Join(des, " ") + ")"
 			}
 
-			fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
+			fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], de)
 
 			if nonames[i] != "" {
 				fmt.Fprintf(w, "    %s\n", nonames[i])
@@ -257,6 +266,7 @@ func (c command) OutputHelp(w io.Writer) {
 			var nonames []string
 			var helps []string
 			var defdesc []string
+			var envs []string
 			width := 0
 
 			for _, o := range curr.Options {
@@ -297,6 +307,7 @@ func (c command) OutputHelp(w io.Writer) {
 				} else {
 					defdesc = append(defdesc, o.DefValue)
 				}
+				envs = append(envs, o.Env)
 
 				w := runewidth.StringWidth(n)
 				if width < w {
@@ -309,12 +320,19 @@ func (c command) OutputHelp(w io.Writer) {
 			for i, n := range names {
 				spaces := strings.Repeat(" ", width-runewidth.StringWidth(n))
 
-				def := ""
+				var des []string
 				if len(defdesc[i]) > 0 {
-					def = " (default: " + defdesc[i] + ")"
+					des = append(des, "default: "+defdesc[i])
+				}
+				if len(envs[i]) > 0 {
+					des = append(des, "env: "+envs[i])
+				}
+				var de string
+				if len(des) > 0 {
+					de = " (" + strings.Join(des, " ") + ")"
 				}
 
-				fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], def)
+				fmt.Fprintf(w, "  %s%s%s%s\n", n, spaces, helps[i], de)
 
 				if nonames[i] != "" {
 					fmt.Fprintf(w, "    %s\n", nonames[i])
