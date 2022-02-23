@@ -114,12 +114,14 @@ func (c *command) setDefaultValues() {
 		if o.DefValue != "" {
 			var dummy bool
 			_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), o.DefValue, true, &dummy)
+			o.Assigned = true
 		}
 		if o.Env != "" {
 			envvalue := os.Getenv(o.Env)
 			if envvalue != "" {
 				var dummy bool
 				_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), envvalue, true, &dummy)
+				o.Assigned = true
 			}
 		}
 	}
