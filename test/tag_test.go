@@ -172,7 +172,8 @@ func TestRequired(t *testing.T) {
 	wantg.C = ""
 	app = newApp(&g)
 	err = app.Run([]string{"-a", "ABC"})
-	gotwant.TestError(t, err, "required")
+	gotwant.TestError(t, err, nil)
+	gotwant.Test(t, g, wantg)
 
 	g = orig
 	wantg = orig
