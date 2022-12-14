@@ -1,14 +1,14 @@
 // Package gli is a CLI parsing and mapping library.
 //
-//     type globalCmd struct {
-//         Name string
-//         Age  int
-//     }
-//     func (g *globalCmd) Run() error {
-//         // :
-//     }
-//     app := gli.NewWith(&globalCmd{})
-//     err := app.Run(os.Args)
+//	type globalCmd struct {
+//	    Name string
+//	    Age  int
+//	}
+//	func (g *globalCmd) Run() error {
+//	    // :
+//	}
+//	app := gli.NewWith(&globalCmd{})
+//	err := app.Run(os.Args)
 package gli
 
 import (
