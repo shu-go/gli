@@ -245,6 +245,7 @@ type helloCmd struct {
 type helloGoodbyeCmd struct {
 	ABC     bool `default:"true"`
 	A, B, C bool
+	D       bool `required:"true"`
 }
 
 func (hello helloCmd) Run() {

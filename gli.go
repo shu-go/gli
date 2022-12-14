@@ -560,6 +560,10 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	err := errorIfEmptyRequired(cmdStack)
 	if err != nil {
+		if !g.SuppressErrorOutput {
+			fmt.Fprintln(g.Stderr, err)
+			g.Help(g.Stdout)
+		}
 		return nil, nil, err
 	}
 
