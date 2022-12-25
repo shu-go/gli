@@ -191,6 +191,10 @@ func TestTypes(t *testing.T) {
 		gotwant.Test(t, g.Map1, (gli.Map)(map[string]string{"hoge": "hogehoge", "moge": "mogemoge"}))
 
 		app = newApp(&g)
+		app.Run([]string{"-D", `hoge:ho\, geh:oge`})
+		gotwant.Test(t, g.Map1, (gli.Map)(map[string]string{"hoge": "ho, geh:oge"}))
+
+		app = newApp(&g)
 		app.Run([]string{"-E", `a:`, "-E", "moge:mogemoge"})
 		gotwant.Test(t, g.Map2, (gli.Map)(map[string]string{"moge": "mogemoge"}))
 	})

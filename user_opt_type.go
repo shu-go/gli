@@ -3,6 +3,7 @@ package gli
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -137,6 +138,8 @@ func (l StrList) Contains(s string) bool {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+var commaRE = regexp.MustCompile(`(?:\\,|[^,])+`)
+
 // IntList is a parsable type of [1, 2, 3]
 type IntList []int
 
@@ -147,9 +150,10 @@ func (l *IntList) Parse(str string, nondefFirst bool) error {
 	if nondefFirst {
 		*l = (*l)[:0]
 	}
-	list := strings.Split(str, ",")
-	for i := 0; i < len(list); i++ {
-		s := strings.TrimSpace(list[i])
+
+	for _, s := range commaRE.Copy().FindAllString(str, -1) {
+		s = strings.TrimSpace(s)
+		s = strings.ReplaceAll(s, `\,`, `,`)
 		n, err := strconv.ParseInt(s, 10, 0)
 		if err != nil {
 			return err
@@ -183,8 +187,9 @@ func (m *Map) Parse(str string, nondefFirst bool) error {
 		*m = make(map[string]string)
 	}
 
-	for _, s := range strings.Split(str, ",") {
+	for _, s := range commaRE.Copy().FindAllString(str, -1) {
 		s = strings.TrimSpace(s)
+		s = strings.ReplaceAll(s, `\,`, `,`)
 		pos := strings.Index(s, ":")
 		if pos == -1 {
 			return errors.New("no separator in Map")
