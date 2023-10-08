@@ -36,9 +36,3 @@ func (o option) longestName() string {
 
 	return maxname
 }
-
-func (o *option) setValue(value interface{}) error {
-	o.ownerV.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(value))
-	o.assigned = true
-	return nil
-}
