@@ -109,14 +109,14 @@ func (c *command) setDefaultValues() {
 	for _, o := range c.options {
 		if o.defValue != "" {
 			var dummy bool
-			_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), o.defValue, true, &dummy)
+			_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), o.defValue, o.tag, true, &dummy)
 			o.assigned = true
 		}
 		if o.env != "" {
 			envvalue := os.Getenv(o.env)
 			if envvalue != "" {
 				var dummy bool
-				_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), envvalue, true, &dummy)
+				_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), envvalue, o.tag, true, &dummy)
 				o.assigned = true
 			}
 		}

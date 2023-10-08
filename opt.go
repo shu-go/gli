@@ -14,7 +14,9 @@ type option struct {
 	required bool
 	assigned bool
 
-	help        string
+	help string
+	tag  reflect.StructTag
+
 	placeholder string
 
 	ownerV   reflect.Value

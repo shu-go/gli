@@ -1,6 +1,6 @@
-module github.com/shu-go/gli
+module github.com/shu-go/gli/v2
 
-go 1.13
+go 1.18
 
 require (
 	github.com/mattn/go-runewidth v0.0.15

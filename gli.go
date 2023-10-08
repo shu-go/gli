@@ -21,7 +21,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/shu-go/cliparser"
@@ -200,17 +199,8 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		}
 
 		isbool := ft.Type.Kind() == reflect.Bool
-		iscmd := false
-		// struct is skipped if a non-Parsable
-		if ft.Type.Kind() == reflect.Struct || (ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct) {
-			if !isStructImplements(ft.Type, reflect.TypeOf((*OptionParser)(nil)).Elem()) &&
-				// time.Time
-				(ft.Type.PkgPath() != "time" || ft.Type.Name() != "Time") &&
-				(ft.Type.Kind() != reflect.Ptr || ft.Type.Elem().PkgPath() != "time" || ft.Type.Elem().Name() != "Time") {
-				//
-				iscmd = true
-			}
-		}
+		iscmd := ft.Type.Kind() == reflect.Struct && LookupTypeDecoder(ft.Type) == nil ||
+			ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct && LookupTypeDecoder(ft.Type.Elem()) == nil
 
 		name := g.arrangeName(ft.Name, iscmd)
 		tag := ft.Tag
@@ -306,6 +296,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				defDesc:            defdesc,
 				required:           required,
 				help:               help,
+				tag:                tag,
 				placeholder:        placeholder,
 				fieldIdx:           i,
 				nondefFirstParsing: true,
@@ -490,7 +481,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				return nil, nil, errors.Wrap(ErrNotDefined, "option "+c.Name)
 			}
 
-			err := setOptValue(o.ownerV.Elem().Field(o.fieldIdx), c.Arg, false, &o.nondefFirstParsing)
+			err := setOptValue(o.ownerV.Elem().Field(o.fieldIdx), c.Arg, o.tag, false, &o.nondefFirstParsing)
 			if err != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "option %q: %v\n\n", c.Name, err)
@@ -648,14 +639,6 @@ func (g *App) arrangeName(name string, iscmd bool) string {
 	return string(result)
 }
 
-func isStructImplements(st reflect.Type, iface reflect.Type) bool {
-	if st.Kind() != reflect.Struct && !(st.Kind() == reflect.Ptr && st.Elem().Kind() == reflect.Struct) {
-		return false
-	}
-
-	return reflect.PtrTo(st).Implements(iface) || st.Implements(iface)
-}
-
 func (g *App) call(funcName string, cmd reflect.Value, cmdStack []*command, args []string) (callErr, userErr error) {
 	methv := cmd.MethodByName(funcName)
 	if methv == (reflect.Value{}) {
@@ -725,7 +708,7 @@ func findStructByType(stack []*command, typ reflect.Type) interface{} {
 	return nil
 }
 
-func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstParsing *bool) error {
+func setOptValue(opt reflect.Value, value string, tag reflect.StructTag, parsingDef bool, nondefFirstParsing *bool) error {
 	if opt.Type().Kind() == reflect.Ptr {
 		var pv reflect.Value
 		if opt.IsNil() {
@@ -734,7 +717,7 @@ func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstPa
 			pv = opt
 		}
 
-		err := setOptValue(pv.Elem(), value, parsingDef, nondefFirstParsing)
+		err := setOptValue(pv.Elem(), value, tag, parsingDef, nondefFirstParsing)
 		if err != nil {
 			return err
 		}
@@ -747,15 +730,12 @@ func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstPa
 	if !parsingDef && *nondefFirstParsing {
 		*nondefFirstParsing = false
 	}
-	if p, ok := opt.Interface().(MultipleOptionParser); ok {
-		return p.Parse(value, ndfp)
-	} else if p, ok := opt.Interface().(OptionParser); ok {
-		return p.Parse(value)
-	} else if opt.CanAddr() {
-		if p, ok := opt.Addr().Interface().(MultipleOptionParser); ok {
-			return p.Parse(value, ndfp)
-		} else if p, ok := opt.Addr().Interface().(OptionParser); ok {
-			return p.Parse(value)
+
+	dec := LookupTypeDecoder(opt.Type())
+	if dec != nil {
+		err := dec(value, opt, tag, ndfp)
+		if err == nil {
+			return nil
 		}
 	}
 
@@ -773,22 +753,13 @@ func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstPa
 		return nil
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		if _, ok := opt.Interface().(time.Duration); ok {
-			dur, err := time.ParseDuration(value)
-			if err != nil {
-				return err
-			}
-			opt.Set(reflect.ValueOf(dur))
-			return nil
-		} else {
-			size := int(opt.Type().Size())
-			i, err := strconv.ParseInt(value, 10, size*8)
-			if err != nil {
-				return err
-			}
-			opt.Set(reflect.ValueOf(i).Convert(opt.Type()))
-			return nil
+		size := int(opt.Type().Size())
+		i, err := strconv.ParseInt(value, 10, size*8)
+		if err != nil {
+			return err
 		}
+		opt.Set(reflect.ValueOf(i).Convert(opt.Type()))
+		return nil
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		size := int(opt.Type().Size())
@@ -809,21 +780,7 @@ func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstPa
 		return nil
 
 	default:
-		switch opt.Interface().(type) {
-		case time.Time:
-			tm, err := time.ParseInLocation("2006-01-02", value, time.Local)
-			if err != nil {
-				tm, err = time.ParseInLocation("2006/01/02", value, time.Local)
-				if err != nil {
-					return err
-				}
-			}
-			opt.Set(reflect.ValueOf(tm))
-			return nil
-
-		default:
-		}
-
+		//nop
 	}
 
 	return ErrOptCanNotBeSet

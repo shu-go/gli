@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -34,15 +35,15 @@ type addCmd struct {
 }
 
 type delCmd struct {
-	Num  *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
-	Done bool         `cli:"done" help:"delete done items"`
+	Num  *[]int `cli:"n,num=NUMBERS" help:"delete by Item Number"`
+	Done bool   `cli:"done" help:"delete done items"`
 }
 
 type doneCmd struct {
 	_ struct{} `help:"mark todoes as done or undone" usage:"todo done [--undone] [--num NUM] [filter words...]"`
 
-	Num    *gli.IntList `cli:"n,num=NUMBERS" help:"delete by Item Number"`
-	Undone bool         `cli:"undone,un,u" help:"mark as UNDONE (default to done)"`
+	Num    *[]int `cli:"n,num=NUMBERS" help:"delete by Item Number"`
+	Undone bool   `cli:"undone,un,u" help:"mark as UNDONE (default to done)"`
 }
 
 func (g globalCmd) Before() error {
@@ -147,7 +148,7 @@ func (del delCmd) Run(global *globalCmd, args []string) error {
 		if del.Num == nil {
 			numsexists = true
 		} else {
-			if del.Num != nil && del.Num.Contains(t.Num) {
+			if del.Num != nil && slices.Contains(*del.Num, t.Num) {
 				numsexists = true
 			}
 		}
@@ -199,7 +200,7 @@ func (done doneCmd) Run(global *globalCmd, args []string) error {
 
 	for i := 0; i < len(list); i++ {
 		t := &(list)[i]
-		if done.Num != nil && done.Num.Contains(t.Num) {
+		if done.Num != nil && slices.Contains(*done.Num, t.Num) {
 			verbose("%s %s\n", mode, t)
 			t.Done = !done.Undone
 			continue
