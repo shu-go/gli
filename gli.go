@@ -163,8 +163,8 @@ func (g *App) Bind(ptrSt interface{}) error {
 	}
 
 	g.root = &command{
-		SelfV:             v,
-		AutoNoBoolOptions: g.AutoNoBoolOptions,
+		selfV:             v,
+		autoNoBoolOptions: g.AutoNoBoolOptions,
 	}
 
 	return g.scanMeta(v.Type(), g.root)
@@ -187,12 +187,12 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				tag := ft.Tag
 
 				// help description
-				if tv, ok := tag.Lookup(g.HelpTag); ok && cmd.Help == "" {
-					cmd.Help = strings.TrimSpace(tv)
+				if tv, ok := tag.Lookup(g.HelpTag); ok && cmd.help == "" {
+					cmd.help = strings.TrimSpace(tv)
 				}
 				// usage description
-				if tv, ok := tag.Lookup(g.UsageTag); ok && cmd.Usage == "" {
-					cmd.Usage = strings.TrimSpace(tv)
+				if tv, ok := tag.Lookup(g.UsageTag); ok && cmd.usage == "" {
+					cmd.usage = strings.TrimSpace(tv)
 				}
 			}
 
@@ -269,27 +269,27 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 
 		if iscmd /* f.Kind() == reflect.Struct */ {
 			sub := &command{
-				Names:             names,
-				Help:              help,
-				Usage:             usage,
+				names:             names,
+				help:              help,
+				usage:             usage,
 				fieldIdx:          i,
-				Parent:            cmd,
-				AutoNoBoolOptions: g.AutoNoBoolOptions,
+				parent:            cmd,
+				autoNoBoolOptions: g.AutoNoBoolOptions,
 			}
-			cmd.Subs = append(cmd.Subs, sub)
+			cmd.subs = append(cmd.subs, sub)
 
 			//HINT
-			lname := sub.LongestName()
+			lname := sub.longestName()
 			for ni := 0; ni < len(names); ni++ {
 				// a.out cmd1 cmd2
 				// cmd2 [cmd1]
-				g.parser.HintCommand(names[ni], cmd.LongestNameStack())
+				g.parser.HintCommand(names[ni], cmd.longestNameStack())
 				// a.out cmd1 help
 				// help [cmd1]
-				g.parser.HintCommand("help", cmd.LongestNameStack())
+				g.parser.HintCommand("help", cmd.longestNameStack())
 				// a.out cmd1 help cmd2
 				// cmd2 [cmd1 help]
-				g.parser.HintCommand(names[ni], append(cmd.LongestNameStack(), "help"))
+				g.parser.HintCommand(names[ni], append(cmd.longestNameStack(), "help"))
 				//rog.Debug("HintAlias", names[ni], lname)
 				g.parser.HintAlias(names[ni], lname)
 			}
@@ -300,26 +300,26 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			}
 		} else {
 			opt := &option{
-				Names:              names,
-				Env:                env,
-				DefValue:           defvalue,
-				DefDesc:            defdesc,
-				Required:           required,
-				Help:               help,
-				Placeholder:        placeholder,
+				names:              names,
+				env:                env,
+				defValue:           defvalue,
+				defDesc:            defdesc,
+				required:           required,
+				help:               help,
+				placeholder:        placeholder,
 				fieldIdx:           i,
 				nondefFirstParsing: true,
 			}
-			cmd.Options = append(cmd.Options, opt)
+			cmd.options = append(cmd.options, opt)
 
 			//HINT
-			lname := opt.LongestName()
+			lname := opt.longestName()
 			for ni := 0; ni < len(names); ni++ {
 				if len(names[ni]) > 1 {
-					g.parser.HintLongName(names[ni], cmd.LongestNameStack())
+					g.parser.HintLongName(names[ni], cmd.longestNameStack())
 				}
 				if !isbool {
-					g.parser.HintWithArg(names[ni], cmd.LongestNameStack())
+					g.parser.HintWithArg(names[ni], cmd.longestNameStack())
 				}
 				g.parser.HintAlias(names[ni], lname)
 			}
@@ -350,15 +350,15 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 		g.parser.HintCommand(nameslice[i], []string{"help"})
 	}
 	cmd := command{
-		Names:             nameslice,
-		Help:              help,
-		SelfV:             v,
-		Parent:            g.root,
-		AutoNoBoolOptions: g.AutoNoBoolOptions,
+		names:             nameslice,
+		help:              help,
+		selfV:             v,
+		parent:            g.root,
+		autoNoBoolOptions: g.AutoNoBoolOptions,
 	}
-	lname := cmd.LongestName()
-	for ni := 0; ni < len(cmd.Names); ni++ {
-		g.parser.HintAlias(cmd.Names[ni], lname)
+	lname := cmd.longestName()
+	for ni := 0; ni < len(cmd.names); ni++ {
+		g.parser.HintAlias(cmd.names[ni], lname)
 	}
 
 	for _, init := range inits {
@@ -370,7 +370,7 @@ func (g *App) AddExtraCommand(ptrSt interface{}, names, help string, inits ...ex
 		panic(err.Error())
 	}
 
-	g.root.Extras = append(g.root.Extras, &cmd)
+	g.root.extras = append(g.root.extras, &cmd)
 }
 
 // Parse parses args and returns results.
@@ -411,7 +411,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	cmd.setMembersReferMe()
 	cmd.setDefaultValues()
 
-	_, defErr := g.call("Init", cmd.SelfV, cmdStack, cmd.Args)
+	_, defErr := g.call("Init", cmd.selfV, cmdStack, cmd.args)
 	if defErr != nil {
 		if !g.SuppressErrorOutput {
 			fmt.Fprintf(g.Stderr, "%v\n", defErr)
@@ -448,16 +448,16 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 		switch c.Type {
 		case cliparser.Arg:
-			cmd.Args = append(cmd.Args, c.Arg)
+			cmd.args = append(cmd.args, c.Arg)
 
 		case cliparser.Option:
 			//rog.Debug(c.Name)
-			o := cmd.FindOptionExact(c.Name)
+			o := cmd.findOptionExact(c.Name)
 
 			// "--no-bool" ?
 			if g.AutoNoBoolOptions && o == nil && strings.HasPrefix(c.Name, "no-") {
-				o = cmd.FindOptionExact(c.Name[3:])
-				if o != nil && o.OwnerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+				o = cmd.findOptionExact(c.Name[3:])
+				if o != nil && o.ownerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
 					c.Name = c.Name[3:]
 					c.Arg = "false"
 				}
@@ -468,8 +468,8 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 					fmt.Fprintf(g.Stdout, "option %q %v\n\n", c.Name, ErrNotDefined)
 
 					var candidates []string
-					for oi := 0; oi < len(cmd.Options); oi++ {
-						names := cmd.Options[oi].Names
+					for oi := 0; oi < len(cmd.options); oi++ {
+						names := cmd.options[oi].names
 						for ni := 0; ni < len(names); ni++ {
 							if strings.HasPrefix(names[ni], c.Name) {
 								candidates = append(candidates, names[ni])
@@ -490,7 +490,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				return nil, nil, errors.Wrap(ErrNotDefined, "option "+c.Name)
 			}
 
-			err := setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), c.Arg, false, &o.nondefFirstParsing)
+			err := setOptValue(o.ownerV.Elem().Field(o.fieldIdx), c.Arg, false, &o.nondefFirstParsing)
 			if err != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "option %q: %v\n\n", c.Name, err)
@@ -498,15 +498,15 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				}
 				return nil, nil, err
 			}
-			o.Assigned = true
+			o.assigned = true
 
 		case cliparser.Command: // may be an arg
-			if len(cmd.Subs)+len(cmd.Extras) == 0 {
-				cmd.Args = append(cmd.Args, c.Name) // command name? -> no, it's an arg
+			if len(cmd.subs)+len(cmd.extras) == 0 {
+				cmd.args = append(cmd.args, c.Name) // command name? -> no, it's an arg
 				continue
 			}
 
-			sub, isextra := cmd.FindCommandExact(c.Name)
+			sub, isextra := cmd.findCommandExact(c.Name)
 			if sub == nil {
 				if !g.SuppressErrorOutput {
 					//rog.Debug("notdefined")
@@ -518,13 +518,13 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			}
 
 			if !isextra {
-				sub.OwnerV = cmd.SelfV
-				subt := cmd.SelfV.Type().Elem().Field(sub.fieldIdx).Type
+				sub.ownerV = cmd.selfV
+				subt := cmd.selfV.Type().Elem().Field(sub.fieldIdx).Type
 				if subt.Kind() == reflect.Ptr {
-					sub.SelfV = reflect.New(subt.Elem())
-					cmd.SelfV.Elem().Field(sub.fieldIdx).Set(sub.SelfV)
+					sub.selfV = reflect.New(subt.Elem())
+					cmd.selfV.Elem().Field(sub.fieldIdx).Set(sub.selfV)
 				} else {
-					sub.SelfV = cmd.SelfV.Elem().Field(sub.fieldIdx).Addr()
+					sub.selfV = cmd.selfV.Elem().Field(sub.fieldIdx).Addr()
 				}
 			}
 			cmd = sub
@@ -532,7 +532,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			cmd.setMembersReferMe()
 			cmd.setDefaultValues()
 
-			_, defErr := g.call("Init", cmd.SelfV, cmdStack, cmd.Args)
+			_, defErr := g.call("Init", cmd.selfV, cmdStack, cmd.args)
 			if defErr != nil {
 				return nil, nil, defErr
 			}
@@ -542,16 +542,16 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	if helpMode {
 		funcName := "Help"
 
-		callErr, helpErr := g.call(funcName, cmd.SelfV, cmdStack, cmd.Args)
+		callErr, helpErr := g.call(funcName, cmd.selfV, cmdStack, cmd.args)
 		if callErr == ErrNotRunnable {
-			callErr, helpErr = g.call(funcName, g.root.SelfV, cmdStack, g.root.Args)
+			callErr, helpErr = g.call(funcName, g.root.selfV, cmdStack, g.root.args)
 		}
 
 		if callErr != nil {
-			if cmd.SelfV == g.root.SelfV {
+			if cmd.selfV == g.root.selfV {
 				g.Help(g.Stdout)
 			} else {
-				cmd.OutputHelp(g.Stdout)
+				cmd.outputHelp(g.Stdout)
 			}
 		}
 
@@ -575,18 +575,18 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	if doRun {
 		for ci := 0; ci < len(cmdStack); ci++ {
-			callErr, beforeErr := g.call("Before", cmdStack[ci].SelfV, cmdStack, cmdStack[ci].Args)
+			callErr, beforeErr := g.call("Before", cmdStack[ci].selfV, cmdStack, cmdStack[ci].args)
 			if callErr == nil && beforeErr != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "%v\n", beforeErr)
-					cmdStack[ci].OutputHelp(g.Stdout)
+					cmdStack[ci].outputHelp(g.Stdout)
 				}
 				return nil, nil, beforeErr
 			}
 
 			defer func(cmd *command) {
 				// After()
-				callErr, afterErr := g.call("After", cmd.SelfV, cmdStack, cmd.Args)
+				callErr, afterErr := g.call("After", cmd.selfV, cmdStack, cmd.args)
 				if callErr != nil && appRunErr == nil {
 					appRunErr = afterErr
 				}
@@ -597,13 +597,13 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 	if doRun {
 		funcName := "Run"
 
-		callErr, runErr := g.call(funcName, cmd.SelfV, cmdStack, cmd.Args)
+		callErr, runErr := g.call(funcName, cmd.selfV, cmdStack, cmd.args)
 
 		if callErr != nil {
 			if cmd == g.root {
 				g.Help(g.Stdout)
 			} else {
-				cmd.OutputHelp(g.Stdout)
+				cmd.outputHelp(g.Stdout)
 			}
 			//return ErrNotDefined
 			return nil, nil, nil
@@ -617,7 +617,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 		}
 	}
 
-	return cmd.SelfV.Interface(), cmd.Args, nil
+	return cmd.selfV.Interface(), cmd.args, nil
 }
 
 func (g *App) arrangeName(name string, iscmd bool) string {
@@ -715,8 +715,8 @@ func returnErr(retv []reflect.Value) error {
 
 func findStructByType(stack []*command, typ reflect.Type) interface{} {
 	for i := len(stack) - 1; i >= 0; i-- {
-		e := stack[i].SelfV
-		ei := stack[i].SelfV.Interface()
+		e := stack[i].selfV
+		ei := stack[i].selfV.Interface()
 		et := e.Type()
 		if et == typ || et.Kind() == reflect.Ptr && et.Elem() == typ {
 			return ei
@@ -832,13 +832,13 @@ func setOptValue(opt reflect.Value, value string, parsingDef bool, nondefFirstPa
 func errorIfEmptyRequired(cmdStack []*command) error {
 	for i := len(cmdStack) - 1; i >= 0; i-- {
 		c := cmdStack[i]
-		for _, o := range c.Options {
-			if !o.Required {
+		for _, o := range c.options {
+			if !o.required {
 				continue
 			}
 
-			if !o.Assigned {
-				return errors.New("option " + o.LongestName() + " is required")
+			if !o.assigned {
+				return errors.New("option " + o.longestName() + " is required")
 			}
 		}
 	}
@@ -863,9 +863,9 @@ func (g App) Help(w io.Writer) {
 		fmt.Fprintf(w, "%s\n", appinfo)
 	}
 
-	g.root.Usage = g.Usage
+	g.root.usage = g.Usage
 
-	g.root.OutputHelp(w)
+	g.root.outputHelp(w)
 
 	fmt.Fprintln(w, `
 Help sub commands:

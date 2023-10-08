@@ -13,34 +13,30 @@ import (
 )
 
 type command struct {
-	Names []string
+	names []string
 
-	Parent *command
-	Subs   []*command
-	Extras []*command
+	parent *command
+	subs   []*command
+	extras []*command
 
-	Options []*option
+	options []*option
 
-	Args []string
+	args []string
 
-	Help  string
-	Usage string
+	help  string
+	usage string
 
-	SelfV    reflect.Value
-	OwnerV   reflect.Value
+	selfV    reflect.Value
+	ownerV   reflect.Value
 	fieldIdx int
 
-	AutoNoBoolOptions bool
+	autoNoBoolOptions bool
 }
 
-func (c command) String() string {
-	return fmt.Sprintf("command{Names:%v, Opts:%v, Subs:%v, Extras:%v, Args:%v}", c.Names, c.Options, c.Subs, c.Extras, c.Args)
-}
-
-func (c command) LongestName() string {
+func (c command) longestName() string {
 	maxlen := -1
 	var maxname string
-	for _, n := range c.Names {
+	for _, n := range c.names {
 		nlen := len(n)
 		if nlen > maxlen {
 			maxlen = nlen
@@ -51,11 +47,11 @@ func (c command) LongestName() string {
 	return maxname
 }
 
-func (c command) LongestNameStack() []string {
+func (c command) longestNameStack() []string {
 	var s []string
 
-	for cmd := &c; cmd != nil; cmd = cmd.Parent {
-		n := cmd.LongestName()
+	for cmd := &c; cmd != nil; cmd = cmd.parent {
+		n := cmd.longestName()
 		if n == "" {
 			break
 		}
@@ -71,9 +67,9 @@ func (c command) LongestNameStack() []string {
 	return s
 }
 
-func (c *command) FindOptionExact(name string) *option {
-	for _, o := range c.Options {
-		for _, n := range o.Names {
+func (c *command) findOptionExact(name string) *option {
+	for _, o := range c.options {
+		for _, n := range o.names {
 			if n == name {
 				return o
 			}
@@ -82,16 +78,16 @@ func (c *command) FindOptionExact(name string) *option {
 	return nil
 }
 
-func (c *command) FindCommandExact(name string) (cmd *command, isextra bool) {
-	for _, c := range c.Subs {
-		for _, n := range c.Names {
+func (c *command) findCommandExact(name string) (cmd *command, isextra bool) {
+	for _, c := range c.subs {
+		for _, n := range c.names {
 			if n == name {
 				return c, false
 			}
 		}
 	}
-	for _, c := range c.Extras {
-		for _, n := range c.Names {
+	for _, c := range c.extras {
+		for _, n := range c.names {
 			if n == name {
 				return c, true
 			}
@@ -101,55 +97,55 @@ func (c *command) FindCommandExact(name string) (cmd *command, isextra bool) {
 }
 
 func (c *command) setMembersReferMe() {
-	for _, o := range c.Options {
-		o.OwnerV = c.SelfV
+	for _, o := range c.options {
+		o.ownerV = c.selfV
 	}
-	for _, s := range c.Subs {
-		s.OwnerV = c.SelfV
+	for _, s := range c.subs {
+		s.ownerV = c.selfV
 	}
 }
 
 func (c *command) setDefaultValues() {
-	for _, o := range c.Options {
-		if o.DefValue != "" {
+	for _, o := range c.options {
+		if o.defValue != "" {
 			var dummy bool
-			_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), o.DefValue, true, &dummy)
-			o.Assigned = true
+			_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), o.defValue, true, &dummy)
+			o.assigned = true
 		}
-		if o.Env != "" {
-			envvalue := os.Getenv(o.Env)
+		if o.env != "" {
+			envvalue := os.Getenv(o.env)
 			if envvalue != "" {
 				var dummy bool
-				_ = setOptValue(o.OwnerV.Elem().Field(o.fieldIdx), envvalue, true, &dummy)
-				o.Assigned = true
+				_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), envvalue, true, &dummy)
+				o.assigned = true
 			}
 		}
 	}
 }
 
-func (c command) OutputHelp(w io.Writer) {
-	if len(c.Names) > 0 {
-		name := longestName(c.Names)
-		fmt.Fprintf(w, "command %s - %s\n", name, c.Help)
+func (c command) outputHelp(w io.Writer) {
+	if len(c.names) > 0 {
+		name := longestName(c.names)
+		fmt.Fprintf(w, "command %s - %s\n", name, c.help)
 	}
 
-	if len(c.Subs)+len(c.Extras) > 0 {
+	if len(c.subs)+len(c.extras) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Sub commands:")
 
 		var subs []*command
-		subs = append(subs, c.Subs...)
-		subs = append(subs, c.Extras...)
+		subs = append(subs, c.subs...)
+		subs = append(subs, c.extras...)
 
 		var names []string
 		var helps []string
 		width := 0
 		for _, s := range subs {
-			snames := s.Names
+			snames := s.names
 			sort.Slice(snames, func(i, j int) bool { return len(snames[i]) > len(snames[j]) })
-			n := strings.Join(s.Names, ", ")
+			n := strings.Join(s.names, ", ")
 			names = append(names, n)
-			helps = append(helps, s.Help)
+			helps = append(helps, s.help)
 
 			w := runewidth.StringWidth(n)
 			if width < w {
@@ -165,7 +161,7 @@ func (c command) OutputHelp(w io.Writer) {
 		}
 	}
 
-	if len(c.Options) > 0 {
+	if len(c.options) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Options:")
 
@@ -176,10 +172,10 @@ func (c command) OutputHelp(w io.Writer) {
 		var envs []string
 		width := 0
 
-		for _, o := range c.Options {
+		for _, o := range c.options {
 
 			var onames []string
-			onames = append(onames, o.Names...)
+			onames = append(onames, o.names...)
 			for i, n := range onames {
 				if len(n) == 1 {
 					onames[i] = "-" + n
@@ -190,12 +186,12 @@ func (c command) OutputHelp(w io.Writer) {
 
 			sort.Slice(onames, func(i, j int) bool { return len(onames[i]) < len(onames[j]) })
 			n := strings.Join(onames, ", ")
-			if o.Placeholder != "" {
-				n += " " + o.Placeholder
+			if o.placeholder != "" {
+				n += " " + o.placeholder
 			}
 			names = append(names, n)
-			if c.AutoNoBoolOptions && o.OwnerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
-				b, err := strconv.ParseBool(o.DefValue)
+			if c.autoNoBoolOptions && o.ownerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+				b, err := strconv.ParseBool(o.defValue)
 				if err != nil {
 					b = false
 				}
@@ -209,13 +205,13 @@ func (c command) OutputHelp(w io.Writer) {
 				nonames = append(nonames, "")
 			}
 
-			helps = append(helps, o.Help)
-			if o.DefDesc != "" {
-				defdesc = append(defdesc, o.DefDesc)
+			helps = append(helps, o.help)
+			if o.defDesc != "" {
+				defdesc = append(defdesc, o.defDesc)
 			} else {
-				defdesc = append(defdesc, o.DefValue)
+				defdesc = append(defdesc, o.defValue)
 			}
-			envs = append(envs, o.Env)
+			envs = append(envs, o.env)
 
 			w := runewidth.StringWidth(n)
 			if width < w {
@@ -250,15 +246,15 @@ func (c command) OutputHelp(w io.Writer) {
 
 	curr := &c
 	for {
-		curr = curr.Parent
+		curr = curr.parent
 		if curr == nil {
 			break
 		}
 
-		if len(curr.Options) > 0 {
+		if len(curr.options) > 0 {
 			currname := "Global"
-			if len(curr.Names) > 0 {
-				currname = "Outer " + curr.Names[0]
+			if len(curr.names) > 0 {
+				currname = "Outer " + curr.names[0]
 			}
 
 			fmt.Fprintln(w)
@@ -271,9 +267,9 @@ func (c command) OutputHelp(w io.Writer) {
 			var envs []string
 			width := 0
 
-			for _, o := range curr.Options {
+			for _, o := range curr.options {
 				var onames []string
-				onames = append(onames, o.Names...)
+				onames = append(onames, o.names...)
 				for i, n := range onames {
 					if len(n) == 1 {
 						onames[i] = "-" + n
@@ -284,12 +280,12 @@ func (c command) OutputHelp(w io.Writer) {
 
 				sort.Slice(onames, func(i, j int) bool { return len(onames[i]) < len(onames[j]) })
 				n := strings.Join(onames, ", ")
-				if o.Placeholder != "" {
-					n += " " + o.Placeholder
+				if o.placeholder != "" {
+					n += " " + o.placeholder
 				}
 				names = append(names, n)
-				if curr.AutoNoBoolOptions && o.OwnerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
-					b, err := strconv.ParseBool(o.DefValue)
+				if curr.autoNoBoolOptions && o.ownerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+					b, err := strconv.ParseBool(o.defValue)
 					if err != nil {
 						b = false
 					}
@@ -303,13 +299,13 @@ func (c command) OutputHelp(w io.Writer) {
 					nonames = append(nonames, "")
 				}
 
-				helps = append(helps, o.Help)
-				if o.DefDesc != "" {
-					defdesc = append(defdesc, o.DefDesc)
+				helps = append(helps, o.help)
+				if o.defDesc != "" {
+					defdesc = append(defdesc, o.defDesc)
 				} else {
-					defdesc = append(defdesc, o.DefValue)
+					defdesc = append(defdesc, o.defValue)
 				}
-				envs = append(envs, o.Env)
+				envs = append(envs, o.env)
 
 				w := runewidth.StringWidth(n)
 				if width < w {
@@ -343,9 +339,9 @@ func (c command) OutputHelp(w io.Writer) {
 		}
 	}
 
-	if len(c.Usage) > 0 {
+	if len(c.usage) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintf(w, "Usage:\n  %v\n", strings.Replace(strings.TrimSpace(c.Usage), "\n", "\n  ", -1))
+		fmt.Fprintf(w, "Usage:\n  %v\n", strings.Replace(strings.TrimSpace(c.usage), "\n", "\n  ", -1))
 	}
 }
 
@@ -354,7 +350,7 @@ type extraCmdInit func(*command)
 // Usage is an optional argument to AddExtracommand.
 func Usage(usage string) extraCmdInit {
 	return func(c *command) {
-		c.Usage = usage
+		c.usage = usage
 	}
 }
 

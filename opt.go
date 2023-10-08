@@ -1,33 +1,32 @@
 package gli
 
 import (
-	"fmt"
 	"reflect"
 )
 
 type option struct {
-	Names []string
+	names []string
 
-	Env      string
-	DefValue string
-	DefDesc  string
+	env      string
+	defValue string
+	defDesc  string
 
-	Required bool
-	Assigned bool
+	required bool
+	assigned bool
 
-	Help        string
-	Placeholder string
+	help        string
+	placeholder string
 
-	OwnerV   reflect.Value
+	ownerV   reflect.Value
 	fieldIdx int
 
 	nondefFirstParsing bool
 }
 
-func (o option) LongestName() string {
+func (o option) longestName() string {
 	maxlen := -1
 	var maxname string
-	for _, n := range o.Names {
+	for _, n := range o.names {
 		nlen := len(n)
 		if nlen > maxlen {
 			maxlen = nlen
@@ -38,12 +37,8 @@ func (o option) LongestName() string {
 	return maxname
 }
 
-func (o option) String() string {
-	return fmt.Sprintf("option{Names:%v}", o.Names)
-}
-
-func (o *option) SetValue(value interface{}) error {
-	o.OwnerV.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(value))
-	o.Assigned = true
+func (o *option) setValue(value interface{}) error {
+	o.ownerV.Elem().Field(o.fieldIdx).Set(reflect.ValueOf(value))
+	o.assigned = true
 	return nil
 }
