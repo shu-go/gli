@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/shu-go/gli"
+	"github.com/shu-go/gli/v2"
 	"github.com/shu-go/gotwant"
 )
 
