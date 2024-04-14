@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -25,18 +26,28 @@ type globalCmd struct {
 	Verbose bool   `cli:"v,verbose" help:"verbose output"`
 }
 
+type common struct {
+	DummyDefault string `cli:"dd" default:"by struct common"`
+}
+
 type listCmd struct {
 	Done   bool `cli:"done" help:"display only done items"`
 	Undone bool `cli:"undone,un,u" help:"display only undone items"`
+
+	common
 }
 
 type addCmd struct {
 	DueTo *time.Time `cli:"due,d=DATE" help:"set due date in form of yyyy-mm-dd"`
+
+	common
 }
 
 type delCmd struct {
 	Num  *[]int `cli:"n,num=NUMBERS" help:"delete by Item Number"`
 	Done bool   `cli:"done" help:"delete done items"`
+
+	common
 }
 
 type doneCmd struct {
@@ -44,6 +55,8 @@ type doneCmd struct {
 
 	Num    *[]int `cli:"n,num=NUMBERS" help:"delete by Item Number"`
 	Undone bool   `cli:"undone,un,u" help:"mark as UNDONE (default to done)"`
+
+	common
 }
 
 func (g globalCmd) Before() error {
@@ -56,6 +69,9 @@ func (g globalCmd) Before() error {
 }
 
 func (ls listCmd) Run(global *globalCmd, args []string) error {
+	if ls.DummyDefault != "by struct common" {
+		return errors.New("--dd is not \"by struct common\"")
+	}
 	if ls.Done && ls.Undone {
 		//fmt.Println("--done and --undone is exclusive")
 		return fmt.Errorf("--done and --undone is exclusive")

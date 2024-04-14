@@ -20,7 +20,7 @@ type option struct {
 	placeholder string
 
 	ownerV   reflect.Value
-	fieldIdx int
+	fieldIdx []int
 
 	nondefFirstParsing bool
 }

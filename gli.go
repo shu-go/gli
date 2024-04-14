@@ -177,8 +177,10 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 		return nil
 	}
 
-	for i := 0; i < t.NumField(); i++ {
-		ft := t.Field(i)
+	fields := fieldsOf(t)
+
+	for i := 0; i < len(fields); i++ {
+		ft := fields[i].Field
 
 		// goto next if not public field
 		if ft.Name[:1] == strings.ToLower(ft.Name[:1]) {
@@ -298,7 +300,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				help:               help,
 				tag:                tag,
 				placeholder:        placeholder,
-				fieldIdx:           i,
+				fieldIdx:           fields[i].Path,
 				nondefFirstParsing: true,
 			}
 			cmd.options = append(cmd.options, opt)
@@ -448,7 +450,8 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			// "--no-bool" ?
 			if g.AutoNoBoolOptions && o == nil && strings.HasPrefix(c.Name, "no-") {
 				o = cmd.findOptionExact(c.Name[3:])
-				if o != nil && o.ownerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+				fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
+				if o != nil && fv.Type().Kind() == reflect.Bool {
 					c.Name = c.Name[3:]
 					c.Arg = "false"
 				}
@@ -481,7 +484,8 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 				return nil, nil, errors.Wrap(ErrNotDefined, "option "+c.Name)
 			}
 
-			err := setOptValue(o.ownerV.Elem().Field(o.fieldIdx), c.Arg, o.tag, false, &o.nondefFirstParsing)
+			fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
+			err := setOptValue(fv, c.Arg, o.tag, false, &o.nondefFirstParsing)
 			if err != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "option %q: %v\n\n", c.Name, err)
@@ -832,4 +836,27 @@ Help sub commands:
 	if g.Copyright != "" {
 		fmt.Fprintf(w, "\n%s\n", g.Copyright)
 	}
+}
+
+type fieldAndPath struct {
+	Field reflect.StructField
+	Path  []int
+}
+
+func fieldsOf(t reflect.Type) []fieldAndPath {
+	result := make([]fieldAndPath, 0, t.NumField())
+
+	for i := 0; i < t.NumField(); i++ {
+		ft := t.Field(i)
+		if ft.Type.Kind() == reflect.Struct && ft.Anonymous {
+			for j := 0; j < ft.Type.NumField(); j++ {
+				jft := ft.Type.Field(j)
+				result = append(result, fieldAndPath{Field: jft, Path: []int{i, j}})
+			}
+		} else {
+			result = append(result, fieldAndPath{Field: ft, Path: []int{i}})
+		}
+	}
+
+	return result
 }

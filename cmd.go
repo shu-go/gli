@@ -109,14 +109,16 @@ func (c *command) setDefaultValues() {
 	for _, o := range c.options {
 		if o.defValue != "" {
 			var dummy bool
-			_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), o.defValue, o.tag, true, &dummy)
+			fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
+			_ = setOptValue(fv, o.defValue, o.tag, true, &dummy)
 			o.assigned = true
 		}
 		if o.env != "" {
 			envvalue := os.Getenv(o.env)
 			if envvalue != "" {
 				var dummy bool
-				_ = setOptValue(o.ownerV.Elem().Field(o.fieldIdx), envvalue, o.tag, true, &dummy)
+				fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
+				_ = setOptValue(fv, envvalue, o.tag, true, &dummy)
 				o.assigned = true
 			}
 		}
@@ -190,7 +192,8 @@ func (c command) outputHelp(w io.Writer) {
 				n += " " + o.placeholder
 			}
 			names = append(names, n)
-			if c.autoNoBoolOptions && o.ownerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+			fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
+			if c.autoNoBoolOptions && fv.Type().Kind() == reflect.Bool {
 				b, err := strconv.ParseBool(o.defValue)
 				if err != nil {
 					b = false
@@ -284,7 +287,8 @@ func (c command) outputHelp(w io.Writer) {
 					n += " " + o.placeholder
 				}
 				names = append(names, n)
-				if curr.autoNoBoolOptions && o.ownerV.Elem().Field(o.fieldIdx).Type().Kind() == reflect.Bool {
+				fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
+				if curr.autoNoBoolOptions && fv.Type().Kind() == reflect.Bool {
 					b, err := strconv.ParseBool(o.defValue)
 					if err != nil {
 						b = false
