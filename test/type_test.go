@@ -109,6 +109,34 @@ func TestTypes(t *testing.T) {
 		gotwant.Test(t, g.Range.Min, "1")
 		gotwant.Test(t, g.Range.Max, "")
 	})
+	t.Run("SeparatorRune", func(t *testing.T) {
+		g := struct {
+			Sep gli.SeparatorRune
+		}{}
+		app := newApp(&g)
+		app.Run([]string{})
+		gotwant.Test(t, g.Sep, gli.SeparatorRune(0))
+		app.Run([]string{"--sep", "a"})
+		gotwant.Test(t, g.Sep, gli.SeparatorRune('a'))
+		app.Run([]string{"--sep", `\n`})                // \ and n
+		gotwant.Test(t, g.Sep, gli.SeparatorRune('\n')) // \n
+		app.Run([]string{"--sep", `\t`})                // \ and t
+		gotwant.Test(t, g.Sep, gli.SeparatorRune('\t')) // \t
+	})
+	t.Run("Separator", func(t *testing.T) {
+		g := struct {
+			Sep gli.Separator
+		}{}
+		app := newApp(&g)
+		app.Run([]string{})
+		gotwant.Test(t, g.Sep, gli.Separator(""))
+		app.Run([]string{"--sep", "a"})
+		gotwant.Test(t, g.Sep, gli.Separator("a"))
+		app.Run([]string{"--sep", `\n`}) // \ and n
+		gotwant.Test(t, g.Sep, gli.Separator("\n"))
+		app.Run([]string{"--sep", `\t`}) // \ and t
+		gotwant.Test(t, g.Sep, gli.Separator("\t"))
+	})
 	t.Run("StrSlice", func(t *testing.T) {
 		g := struct {
 			List []string `default:"d,e,f"`

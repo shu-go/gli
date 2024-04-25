@@ -72,6 +72,10 @@ type Range struct {
 	Min, Max string
 }
 
+type Separator string
+
+type SeparatorRune rune
+
 ////////////////////////////////////////////////////////////////////////////////
 
 type typeRegistry struct {
@@ -187,6 +191,36 @@ func strRangeDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTime
 	return nil
 }
 
+func separatorRuneDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error {
+	r := rune(' ')
+	switch s {
+	case ``:
+		r = rune(' ')
+	case `\n`:
+		r = '\n'
+	case `\t`:
+		r = '\t'
+	default:
+		if len(s) > 0 {
+			r = []rune(s)[0]
+		}
+	}
+
+	// v = gli.SeparatorRune(r)
+	v.Set(reflect.ValueOf(r).Convert(v.Type()))
+
+	return nil
+}
+
+func separatorDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error {
+	s = strings.ReplaceAll(s, `\n`, "\n")
+	s = strings.ReplaceAll(s, `\t`, "\t")
+
+	v.Set(reflect.ValueOf(s).Convert(v.Type()))
+
+	return nil
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 var typRegistry typeRegistry
@@ -203,4 +237,6 @@ func init() {
 	RegisterTypeDecoder(reflect.TypeOf(map[string]string{}), strMapDecoder)
 
 	RegisterTypeDecoder(reflect.TypeOf(Range{}), strRangeDecoder)
+	RegisterTypeDecoder(reflect.TypeOf(SeparatorRune(0)), separatorRuneDecoder)
+	RegisterTypeDecoder(reflect.TypeOf(Separator("")), separatorDecoder)
 }
