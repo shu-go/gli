@@ -259,6 +259,8 @@ Options:
     - true if the option is given in the command line
   - checked just before Before or Run hook function is executed
   - this check is not affected by Init, Before, After hook function nor default tag
+- type
+  - [User defined decoder](#user-defined-decoder)
 - help
 
 Sub commands:
@@ -290,8 +292,108 @@ type SubCommand2 struct {
 
 Both Sub1 and Sub2 are handled as have same tags.
 
+# Decoding optional values
+
+## go built-in types
+
+Using reflection, gli sets a given value to each option.
+
+## time.Time
+
+Local time and only "yyyy/mm/dd" or "yyyy-mm-dd" formats are supported.
+(to override, see [User defined decoder](#user-defined-decoder))
+
+## time.Duration
+
+time.ParseDuration
+
+## []string, []int
+
+`--opt 1,2,3`
+
+## map[string]string
+
+`--opt key:value,key:value`
+
+## gli.Range
+
+`--opt 1:100`
+
+`gli.Range` has two fields, `r.Min` and `r.Max`.
+
+## Separator
+
+It replaces []rune{'\\', 'n'} to "\n" and []rune{'\\','t'} to "\t".
+
+The field should have `gli.Separator` type or a string type with a struct tag `type:"Separator"`.
+
+```go
+type MyCommand struct {
+    Sep1 gli.Separator
+
+    Sep2 string `type:"Separator"`
+}
+```
+
+## SeparatorRune
+
+The field type should be `gli.SeparatorRune` type or a rune type with a structure tag `type:"SeparatorRune"`.
+
+## Choice
+
+```go
+type MyCommand struct {
+    YourPlace string `type:"Choice" choices:"home,scool,office"`
+}
+```
+
+## User defined decoder
+
+1. Define a decoder function as TypeDecoder
+2. Call [gli.RegisterTypeDecoder](reflect.TypeOf(anyValueOfTheType), decoderFunc)
+2. Call [gli.RegisterTypeDecoder]("a string value for struct tag 'type'", decoderFunc)
+
+
+```go
+// s is a string to decode.
+// v is a option itself as reflect.Value.
+// tag is a StructTag of the option.
+type TypeDecoder func(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error
+
+// For an example: time.Time
+func timeDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error {
+	tm, err := time.ParseInLocation("2006-01-02", s, time.Local)
+	if err != nil {
+		tm, err = time.ParseInLocation("2006/01/02", s, time.Local)
+		if err != nil {
+			return err
+		}
+	}
+	v.Set(reflect.ValueOf(tm))
+	return nil
+}
+
+// For another example: Separator
+func separatorDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error {
+	s = strings.ReplaceAll(s, `\n`, "\n")
+	s = strings.ReplaceAll(s, `\t`, "\t")
+
+	v.Set(reflect.ValueOf(s).Convert(v.Type()))
+
+	return nil
+}
+
+func init() {
+	gli.RegisterTypeDecoder(reflect.TypeOf(time.Time{}), timeDecoder)
+	gli.RegisterTypeDecoder("Separator", timeDecoder)
+}
+```
+
 ----
 
 Copyright 2018 Shuhei Kubota
 
 <!--  vim: set et ft=markdown sts=4 sw=4 ts=4 tw=0 : -->
+
+
+

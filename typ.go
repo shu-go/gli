@@ -51,11 +51,12 @@ import (
 // # TypeDecoder
 //
 // s is a string to decode.
+// v is a option itself as reflect.Value.
 //
 // tag is a StructTag of the option.
 //
-// If firstTime is true, the function should reset v and then decode s into v.
-// Otherwise, it simply decodes s into v.
+// If firstTime is true, the function should reset v and then decode s to v.
+// Otherwise, it simply decodes s to v.
 // This parameter is useful when appending the contents of a value.
 type TypeDecoder func(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error
 
