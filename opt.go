@@ -14,6 +14,8 @@ type option struct {
 	required bool
 	assigned bool
 
+	dectype string
+
 	help string
 	tag  reflect.StructTag
 

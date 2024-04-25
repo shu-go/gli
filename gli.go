@@ -70,6 +70,8 @@ type App struct {
 	EnvTag string
 	// RequiredTag is a tag key. default: `required`
 	RequiredTag string
+	// DecTypeTag is a tag key that is used to lookup decoder. default: `type`
+	DecTypeTag string
 
 	// MyCommandABC => false(default): "mycommandabc" , true: "my-command-abc"
 	HyphenedCommandName bool
@@ -113,6 +115,7 @@ func New() App {
 		DefDescTag:  "defdesc",
 		EnvTag:      "env",
 		RequiredTag: "required",
+		DecTypeTag:  "type",
 
 		HyphenedCommandName: false,
 		HyphenedOptionName:  false,
@@ -200,12 +203,16 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 			continue
 		}
 
+		tag := ft.Tag
+
+		var dectype string
+		dectype = strings.TrimSpace(tag.Get(g.DecTypeTag))
+
 		isbool := ft.Type.Kind() == reflect.Bool
-		iscmd := ft.Type.Kind() == reflect.Struct && LookupTypeDecoder(ft.Type) == nil ||
-			ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct && LookupTypeDecoder(ft.Type.Elem()) == nil
+		iscmd := ft.Type.Kind() == reflect.Struct && LookupTypeDecoder(ft.Type) == nil && LookupTypeDecoder(dectype) == nil ||
+			ft.Type.Kind() == reflect.Ptr && ft.Type.Elem().Kind() == reflect.Struct && LookupTypeDecoder(ft.Type.Elem()) == nil && LookupTypeDecoder(dectype) == nil
 
 		name := g.arrangeName(ft.Name, iscmd)
-		tag := ft.Tag
 
 		names := []string{}
 		var env string
@@ -297,6 +304,7 @@ func (g *App) scanMeta(t reflect.Type, cmd *command) error {
 				defValue:           defvalue,
 				defDesc:            defdesc,
 				required:           required,
+				dectype:            dectype,
 				help:               help,
 				tag:                tag,
 				placeholder:        placeholder,
@@ -402,7 +410,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 
 	cmdStack := []*command{cmd}
 	cmd.setMembersReferMe()
-	cmd.setDefaultValues()
+	cmd.setDefaultValues(g.DecTypeTag)
 
 	_, defErr := g.call("Init", cmd.selfV, cmdStack, cmd.args)
 	if defErr != nil {
@@ -485,7 +493,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			}
 
 			fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
-			err := setOptValue(fv, c.Arg, o.tag, false, &o.nondefFirstParsing)
+			err := setOptValue(fv, c.Arg, o.tag, g.DecTypeTag, false, &o.nondefFirstParsing)
 			if err != nil {
 				if !g.SuppressErrorOutput {
 					fmt.Fprintf(g.Stderr, "option %q: %v\n\n", c.Name, err)
@@ -525,7 +533,7 @@ func (g *App) exec(args []string, doRun bool) (tgt interface{}, tgtargs []string
 			cmd = sub
 			cmdStack = append(cmdStack, cmd)
 			cmd.setMembersReferMe()
-			cmd.setDefaultValues()
+			cmd.setDefaultValues(g.DecTypeTag)
 
 			_, defErr := g.call("Init", cmd.selfV, cmdStack, cmd.args)
 			if defErr != nil {
@@ -712,7 +720,7 @@ func findStructByType(stack []*command, typ reflect.Type) interface{} {
 	return nil
 }
 
-func setOptValue(opt reflect.Value, value string, tag reflect.StructTag, parsingDef bool, nondefFirstParsing *bool) error {
+func setOptValue(opt reflect.Value, value string, tag reflect.StructTag, dectypeTag string, parsingDef bool, nondefFirstParsing *bool) error {
 	if opt.Type().Kind() == reflect.Ptr {
 		var pv reflect.Value
 		if opt.IsNil() {
@@ -721,7 +729,7 @@ func setOptValue(opt reflect.Value, value string, tag reflect.StructTag, parsing
 			pv = opt
 		}
 
-		err := setOptValue(pv.Elem(), value, tag, parsingDef, nondefFirstParsing)
+		err := setOptValue(pv.Elem(), value, tag, dectypeTag, parsingDef, nondefFirstParsing)
 		if err != nil {
 			return err
 		}
@@ -735,11 +743,16 @@ func setOptValue(opt reflect.Value, value string, tag reflect.StructTag, parsing
 		*nondefFirstParsing = false
 	}
 
-	dec := LookupTypeDecoder(opt.Type())
+	dec := LookupTypeDecoder(strings.TrimSpace(tag.Get(dectypeTag)))
 	if dec != nil {
-		err := dec(value, opt, tag, ndfp)
-		if err == nil {
-			return nil
+		return dec(value, opt, tag, ndfp)
+	} else {
+		dec = LookupTypeDecoder(opt.Type())
+		if dec != nil {
+			err := dec(value, opt, tag, ndfp)
+			if err == nil {
+				return nil
+			}
 		}
 	}
 

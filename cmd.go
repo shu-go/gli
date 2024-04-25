@@ -105,12 +105,12 @@ func (c *command) setMembersReferMe() {
 	}
 }
 
-func (c *command) setDefaultValues() {
+func (c *command) setDefaultValues(dectypeTag string) {
 	for _, o := range c.options {
 		if o.defValue != "" {
 			var dummy bool
 			fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
-			_ = setOptValue(fv, o.defValue, o.tag, true, &dummy)
+			_ = setOptValue(fv, o.defValue, o.tag, dectypeTag, true, &dummy)
 			o.assigned = true
 		}
 		if o.env != "" {
@@ -118,7 +118,7 @@ func (c *command) setDefaultValues() {
 			if envvalue != "" {
 				var dummy bool
 				fv := o.ownerV.Elem().FieldByIndex(o.fieldIdx)
-				_ = setOptValue(fv, envvalue, o.tag, true, &dummy)
+				_ = setOptValue(fv, envvalue, o.tag, dectypeTag, true, &dummy)
 				o.assigned = true
 			}
 		}

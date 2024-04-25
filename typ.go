@@ -60,11 +60,11 @@ import (
 type TypeDecoder func(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error
 
 // See [TypeDecoder].
-func RegisterTypeDecoder(typ reflect.Type, dec TypeDecoder) {
+func RegisterTypeDecoder(typ interface{}, dec TypeDecoder) {
 	typRegistry.Register(typ, dec)
 }
 
-func LookupTypeDecoder(typ reflect.Type) TypeDecoder {
+func LookupTypeDecoder(typ interface{}) TypeDecoder {
 	return typRegistry.Lookup(typ)
 }
 
@@ -72,24 +72,32 @@ type Range struct {
 	Min, Max string
 }
 
+//	type MyCommand struct {
+//	  Separator1 gli.Separator
+//	  Separator2 string `type:"Separator"`
+//	}
 type Separator string
 
+//	type MyCommand struct {
+//	  Separator1 gli.SeparatorRune
+//	  Separator2 string `type:"SeparatorRune"`
+//	}
 type SeparatorRune rune
 
 ////////////////////////////////////////////////////////////////////////////////
 
 type typeRegistry struct {
 	m   sync.Mutex
-	reg map[reflect.Type]TypeDecoder
+	reg map[interface{}]TypeDecoder
 }
 
-func (t *typeRegistry) Register(typ reflect.Type, dec TypeDecoder) {
+func (t *typeRegistry) Register(typ interface{}, dec TypeDecoder) {
 	t.m.Lock()
 	t.reg[typ] = dec
 	t.m.Unlock()
 }
 
-func (t *typeRegistry) Lookup(typ reflect.Type) TypeDecoder {
+func (t *typeRegistry) Lookup(typ interface{}) TypeDecoder {
 	t.m.Lock()
 	dec, found := t.reg[typ]
 	t.m.Unlock()
@@ -227,7 +235,7 @@ var typRegistry typeRegistry
 
 func init() {
 	typRegistry = typeRegistry{
-		reg: make(map[reflect.Type]TypeDecoder),
+		reg: make(map[interface{}]TypeDecoder),
 	}
 
 	RegisterTypeDecoder(reflect.TypeOf(time.Time{}), timeDecoder)
@@ -238,5 +246,7 @@ func init() {
 
 	RegisterTypeDecoder(reflect.TypeOf(Range{}), strRangeDecoder)
 	RegisterTypeDecoder(reflect.TypeOf(SeparatorRune(0)), separatorRuneDecoder)
+	RegisterTypeDecoder("SeparatorRune", separatorRuneDecoder)
 	RegisterTypeDecoder(reflect.TypeOf(Separator("")), separatorDecoder)
+	RegisterTypeDecoder("Separator", separatorDecoder)
 }
