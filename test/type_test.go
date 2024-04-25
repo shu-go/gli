@@ -164,6 +164,28 @@ func TestTypes(t *testing.T) {
 		gotwant.Test(t, g.Sep, "\n")
 		app.Run([]string{"--sep", `\t`}) // \ and t
 		gotwant.Test(t, g.Sep, "\t")
+		app.Run([]string{"--sep", "abc"})
+		gotwant.Test(t, g.Sep, "abc")
+	})
+	t.Run("Choice(dectype)", func(t *testing.T) {
+		g := struct {
+			Where string `type:"Choice" choices:"home,school,labo" default:" "`
+		}{}
+		app := newApp(&g)
+		app.Run([]string{})
+		gotwant.Test(t, g.Where, "") // " " is not in the choices
+		err := app.Run([]string{"--where", "a"})
+		gotwant.TestError(t, err, "choices")
+		gotwant.Test(t, g.Where, "")
+		err = app.Run([]string{"--where", "home"})
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, g.Where, "home")
+		err = app.Run([]string{"--where", "school"})
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, g.Where, "school")
+		err = app.Run([]string{"--where", "labo"})
+		gotwant.TestError(t, err, nil)
+		gotwant.Test(t, g.Where, "labo")
 	})
 	t.Run("StrSlice", func(t *testing.T) {
 		g := struct {

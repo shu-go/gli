@@ -229,6 +229,30 @@ func separatorDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTim
 	return nil
 }
 
+// requires a tag `choices:"a,b,c"`
+func choiceDecoder(s string, v reflect.Value, tag reflect.StructTag, firstTime bool) error {
+	choicesValue, ok := tag.Lookup("choices")
+	choices := strings.Split(choicesValue, ",")
+	if !ok || len(choices) == 0 {
+		panic("choices: no choices are given")
+	}
+
+	found := false
+	for _, c := range choices {
+		if strings.EqualFold(s, c) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return errors.New("choices: " + choicesValue)
+	}
+
+	v.Set(reflect.ValueOf(s).Convert(v.Type()))
+
+	return nil
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 var typRegistry typeRegistry
@@ -249,4 +273,5 @@ func init() {
 	RegisterTypeDecoder("SeparatorRune", separatorRuneDecoder)
 	RegisterTypeDecoder(reflect.TypeOf(Separator("")), separatorDecoder)
 	RegisterTypeDecoder("Separator", separatorDecoder)
+	RegisterTypeDecoder("Choice", choiceDecoder)
 }
